@@ -6,6 +6,5 @@ configuration: Release
 build_script:
 - ps: .\build.ps1
 
-# artifacts:
-# - path: 'output\**\*.nupkg'
-#   name: NuGet package
+artifacts:
+- path: 'output\*.nupkg'

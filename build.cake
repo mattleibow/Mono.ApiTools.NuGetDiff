@@ -3,6 +3,17 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 
+// a bit of logic to create the version number:
+//  - input                     = 1.2.3.4
+//  - package version           = 1.2.3
+//  - preview package version   = 1.2.3-preview4
+var version = Version.Parse(Argument("packageversion", EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0.0"));
+var previewNumber   = version.Revision;
+var assemblyVersion = $"{version.Major}.0.0.0";
+var fileVersion     = $"{version.Major}.{version.Minor}.{version.Build}.0";
+var infoVersion     = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
+var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
+
 void DownloadMonoSources(DirectoryPath dest, params string[] urls)
 {
     var rootUrl = $"https://github.com/mattleibow/mono/raw/mattleibow/make-library";
@@ -48,14 +59,30 @@ Task("Default")
     DownloadMonoSources("externals/mono-api-diff", "mcs/tools/mono-api-diff/mono-api-diff.exe.sources");
     DownloadMonoSources("externals/mono-api-html", "mcs/tools/mono-api-html/mono-api-html.exe.sources");
 
-    Information("Building solution...");
-    MSBuild("Mono.ApiTools.NuGetDiff.sln", cfg => cfg
-        .SetVerbosity(Verbosity.Normal)
+    var settings = new MSBuildSettings()
+        .SetConfiguration(configuration)
+        .SetVerbosity(Verbosity.Minimal)
         .WithRestore()
-        .WithProperty("Configuration", new [] { configuration }));
+        .WithProperty("IncludeSymbols", "True")
+        .WithProperty("PackageVersion", packageVersion)
+        .WithProperty("Version", assemblyVersion)
+        .WithProperty("FileVersion", fileVersion)
+        .WithProperty("InformationalVersion", infoVersion)
+        .WithProperty("PackageOutputPath", MakeAbsolute((DirectoryPath)"./output/").FullPath);
 
-    Information("Running tests...");
-    DotNetCoreTool("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", "xunit", "-verbose");
+    Information("Building solution...");
+    MSBuild("Mono.ApiTools.NuGetDiff.sln", settings);
+
+    Information("Packing NuGets...");
+    // stable
+    settings = settings.WithTarget("Pack");
+    MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+    // pre-release
+    settings.WithProperty("PackageVersion", packageVersion + "-preview-" + previewNumber);
+    MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+
+    // Information("Running tests...");
+    // DotNetCoreTool("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", "xunit", "-verbose");
 });
 
 RunTarget(target);
