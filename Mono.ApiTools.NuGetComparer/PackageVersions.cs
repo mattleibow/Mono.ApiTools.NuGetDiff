@@ -6,7 +6,7 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
-namespace NuGetComparer
+namespace Mono.ApiTools.NuGetComparer
 {
 	public class PackageVersions
 	{

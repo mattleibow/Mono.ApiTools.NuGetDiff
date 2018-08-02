@@ -7,7 +7,7 @@ using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace NuGetComparer.Tests
+namespace Mono.ApiTools.NuGetComparer.Tests
 {
 	public class PackageVersionsTests
 	{

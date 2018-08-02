@@ -1,3 +1,4 @@
+#tool "nuget:?package=xunit.runner.console&version=2.4.0"
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
@@ -48,15 +49,13 @@ Task("Default")
     DownloadMonoSources("externals/mono-api-html", "mcs/tools/mono-api-html/mono-api-html.exe.sources");
 
     Information("Building solution...");
-    MSBuild("NuGetComparer.sln", cfg => cfg
-        .SetVerbosity(Verbosity.Minimal)
+    MSBuild("Mono.ApiTools.NuGetComparer.sln", cfg => cfg
+        .SetVerbosity(Verbosity.Normal)
         .WithRestore()
         .WithProperty("Configuration", new [] { configuration }));
 
     Information("Running tests...");
-    DotNetCoreTest("NuGetComparer.Tests/NuGetComparer.Tests.csproj", new DotNetCoreTestSettings {
-        Configuration = configuration,
-    });
+    DotNetCoreTool("Mono.ApiTools.NuGetComparer.Tests/Mono.ApiTools.NuGetComparer.Tests.csproj", "xunit", "-verbose");
 });
 
 RunTarget(target);

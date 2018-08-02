@@ -5,7 +5,7 @@ using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 
-namespace NuGetComparer
+namespace Mono.ApiTools.NuGetComparer
 {
 	public class PackageDiff
 	{
