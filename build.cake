@@ -81,8 +81,8 @@ Task("Default")
     settings.WithProperty("PackageVersion", packageVersion + "-preview-" + previewNumber);
     MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
 
-    // Information("Running tests...");
-    // DotNetCoreTool("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", "xunit", "-verbose");
+    Information("Running tests...");
+    DotNetCoreTool("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", "xunit", "-verbose");
 });
 
 RunTarget(target);
