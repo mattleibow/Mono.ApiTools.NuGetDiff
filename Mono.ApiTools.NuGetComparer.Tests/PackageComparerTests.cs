@@ -14,23 +14,27 @@ using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace NuGetComparer.Tests
+namespace Mono.ApiTools.NuGetComparer.Tests
 {
 	public class PackageComparerTests
 	{
-		private const string TestPackageId = "Xamarin.Forms";
+		private const string FormsPackageId = "Xamarin.Forms";
 
-		private const string TestV15Number1 = "1.5.1.6471";
-		private const string TestV20Number1 = "2.0.0.6482";
-		private const string TestV25Number1 = "2.5.0.280555";
-		private const string TestV30Number1 = "3.0.0.550146";
-		private const string TestV30Number2 = "3.0.0.561731";
-		private const string TestV30Number3 = "3.0.0.446417";
-		private const string TestV31Number1 = "3.1.0.697729";
+		private const string FormsV15Number1 = "1.5.1.6471";
+		private const string FormsV20Number1 = "2.0.0.6482";
+		private const string FormsV25Number1 = "2.5.0.280555";
+		private const string FormsV30Number1 = "3.0.0.550146";
+		private const string FormsV30Number2 = "3.0.0.561731";
+		private const string FormsV30Number3 = "3.0.0.446417";
+		private const string FormsV31Number1 = "3.1.0.697729";
 
-		private const string TestV20Url1 = "https://www.nuget.org/api/v2/package/Xamarin.Forms/2.0.0.6482";
-		private const string TestV30Url1 = "https://www.nuget.org/api/v2/package/Xamarin.Forms/3.0.0.550146";
-		private const string TestV3Url2 = "https://www.nuget.org/api/v2/package/Xamarin.Forms/3.0.0.561731";
+		private const string FormsV20Url1 = "https://www.nuget.org/api/v2/package/Xamarin.Forms/2.0.0.6482";
+		private const string FormsV30Url1 = "https://www.nuget.org/api/v2/package/Xamarin.Forms/3.0.0.550146";
+		private const string FormsV3Url2 = "https://www.nuget.org/api/v2/package/Xamarin.Forms/3.0.0.561731";
+
+		private const string SkiaPackageId = "SkiaSharp";
+		private const string SkiaV600Number1 = "1.60.0";
+		private const string SkiaV602Number1 = "1.60.2";
 
 		private static readonly string[] searchPaths;
 
@@ -45,10 +49,10 @@ namespace NuGetComparer.Tests
 			var comparer = new PackageComparer();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(TestPackageId, TestV30Number1, TestV30Number2);
+			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV30Number1, FormsV30Number2);
 
-			Assert.Equal(NuGetVersion.Parse(TestV30Number1), diff.OldIdentity.Version);
-			Assert.Equal(NuGetVersion.Parse(TestV30Number2), diff.NewIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV30Number1), diff.OldIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
 
 			Assert.Empty(diff.AddedFrameworks);
 			Assert.Empty(diff.RemovedFrameworks);
@@ -65,10 +69,10 @@ namespace NuGetComparer.Tests
 			var comparer = new PackageComparer();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(TestPackageId, TestV20Number1, TestV30Number2);
+			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV20Number1, FormsV30Number2);
 
-			Assert.Equal(NuGetVersion.Parse(TestV20Number1), diff.OldIdentity.Version);
-			Assert.Equal(NuGetVersion.Parse(TestV30Number2), diff.NewIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
 
 			Assert.NotEmpty(diff.AddedFrameworks);
 			Assert.NotEmpty(diff.RemovedFrameworks);
@@ -85,10 +89,10 @@ namespace NuGetComparer.Tests
 			var comparer = new PackageComparer();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(TestPackageId, TestV20Number1, TestV20Number1);
+			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV20Number1, FormsV20Number1);
 
-			Assert.Equal(NuGetVersion.Parse(TestV20Number1), diff.OldIdentity.Version);
-			Assert.Equal(NuGetVersion.Parse(TestV20Number1), diff.NewIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.NewIdentity.Version);
 
 			Assert.Empty(diff.AddedFrameworks);
 			Assert.Empty(diff.RemovedFrameworks);
@@ -102,20 +106,20 @@ namespace NuGetComparer.Tests
 		[Fact]
 		public async Task TestCompareRemoteFileWithLocalFile()
 		{
-			var newPath = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
+			var newPath = GenerateTestOutputPath();
 
 			using (var wc = new WebClient())
 			{
-				await wc.DownloadFileTaskAsync(TestV3Url2, newPath);
+				await wc.DownloadFileTaskAsync(FormsV3Url2, newPath);
 			}
 
 			var comparer = new PackageComparer();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(TestPackageId, TestV20Number1, new PackageArchiveReader(newPath));
+			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV20Number1, new PackageArchiveReader(newPath));
 
-			Assert.Equal(NuGetVersion.Parse(TestV20Number1), diff.OldIdentity.Version);
-			Assert.Equal(NuGetVersion.Parse(TestV30Number2), diff.NewIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
 
 			Assert.NotEmpty(diff.AddedFrameworks);
 			Assert.NotEmpty(diff.RemovedFrameworks);
@@ -129,13 +133,13 @@ namespace NuGetComparer.Tests
 		[Fact]
 		public async Task TestCompareTwoLocalFiles()
 		{
-			var oldPath = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
-			var newPath = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
+			var oldPath = GenerateTestOutputPath();
+			var newPath = GenerateTestOutputPath();
 
 			using (var wc = new WebClient())
 			{
-				await wc.DownloadFileTaskAsync(TestV20Url1, oldPath);
-				await wc.DownloadFileTaskAsync(TestV3Url2, newPath);
+				await wc.DownloadFileTaskAsync(FormsV20Url1, oldPath);
+				await wc.DownloadFileTaskAsync(FormsV3Url2, newPath);
 			}
 
 			var comparer = new PackageComparer();
@@ -143,8 +147,8 @@ namespace NuGetComparer.Tests
 
 			var diff = await comparer.GeneratePackageDiffAsync(oldPath, newPath);
 
-			Assert.Equal(NuGetVersion.Parse(TestV20Number1), diff.OldIdentity.Version);
-			Assert.Equal(NuGetVersion.Parse(TestV30Number2), diff.NewIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
+			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
 
 			Assert.NotEmpty(diff.AddedFrameworks);
 			Assert.NotEmpty(diff.RemovedFrameworks);
@@ -158,30 +162,41 @@ namespace NuGetComparer.Tests
 		[Fact]
 		public async Task TestCompletePackageDiffIsGeneratedCorrectlyWithoutAllReferences()
 		{
-			var diffDir = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
+			var diffDir = GenerateTestOutputPath();
 
 			var comparer = new PackageComparer();
 			comparer.IgnoreResolutionErrors = true;
 
-			await comparer.SaveCompletePackageDiffToDirectoryAsync(TestPackageId, TestV25Number1, TestV31Number1, diffDir);
+			await comparer.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 		}
 
 		[Fact]
 		public async Task TestCompletePackageDiffThrowsWithoutAllReferencesAndFlag()
 		{
-			var diffDir = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
+			var diffDir = GenerateTestOutputPath();
 
 			var comparer = new PackageComparer();
 			comparer.IgnoreResolutionErrors = false;
 
-			var task = comparer.SaveCompletePackageDiffToDirectoryAsync(TestPackageId, TestV25Number1, TestV31Number1, diffDir);
+			var task = comparer.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 			await Assert.ThrowsAsync<AssemblyResolutionException>(() => task);
+		}
+
+		[Fact]
+		public async Task TestCompleteSkiaPackageDiffIsGeneratedCorrectly()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new PackageComparer();
+			comparer.SearchPaths.AddRange(searchPaths);
+
+			await comparer.SaveCompletePackageDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number1, SkiaV602Number1, diffDir);
 		}
 
 		[Fact]
 		public async Task TestCompletePackageDiffIsGeneratedCorrectly()
 		{
-			var diffDir = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
+			var diffDir = GenerateTestOutputPath();
 
 			var comparer = new PackageComparer();
 			comparer.SearchPaths.AddRange(searchPaths);
@@ -195,21 +210,21 @@ namespace NuGetComparer.Tests
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
 
-			await comparer.SaveCompletePackageDiffToDirectoryAsync(TestPackageId, TestV25Number1, TestV31Number1, diffDir);
+			await comparer.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 		}
 
 		[Fact]
 		public async Task TestCompletePackageDiffIsTheSameEvenWithoutReferences()
 		{
-			var missingDir = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
-			var allDir = Path.Combine(Path.GetTempPath(), "NuGetComparer", Path.GetRandomFileName());
+			var missingDir = GenerateTestOutputPath();
+			var allDir = GenerateTestOutputPath();
 
 			// generate diff with missing references
 			var missing = new PackageComparer();
 			missing.IgnoreResolutionErrors = true;
 			missing.IgnoreInheritedInterfaces = true;
 			missing.SaveAssemblyMarkdownDiff = true;
-			await missing.SaveCompletePackageDiffToDirectoryAsync(TestPackageId, TestV25Number1, TestV31Number1, missingDir);
+			await missing.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, missingDir);
 
 			// generate diff with everything
 			var all = new PackageComparer();
@@ -223,7 +238,7 @@ namespace NuGetComparer.Tests
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Core.UI", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
-			await all.SaveCompletePackageDiffToDirectoryAsync(TestPackageId, TestV25Number1, TestV31Number1, allDir);
+			await all.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, allDir);
 
 			// test the markdown files as the xml will be different as some dependency type will not be loaded
 			// are there the same files
@@ -240,6 +255,11 @@ namespace NuGetComparer.Tests
 				var missingFile = await File.ReadAllTextAsync(missingDic[pair.Key]);
 				Assert.Equal(allFile, missingFile);
 			}
+		}
+
+		private static string GenerateTestOutputPath()
+		{
+			return Path.Combine(Path.GetTempPath(), "Mono.ApiTools.NuGetComparer", Path.GetRandomFileName());
 		}
 
 		private static IEnumerable<string> GetSearchPaths()
@@ -282,9 +302,6 @@ namespace NuGetComparer.Tests
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.FoundationContract\1.0.0.0");
 				paths.Add($@"{pf}\GtkSharp\2.12\lib");
 				paths.Add($@"{vs}\Common7\IDE\PublicAssemblies");
-				//paths.AddRange($@"{NUGET_PACKAGES}/xamarin.forms/{GetVersion("Xamarin.Forms", "release")}/lib/*");
-				//paths.AddRange($@"{NUGET_PACKAGES}/tizen.net/{GetVersion("Tizen.NET", "release")}/lib/*");
-				//paths.AddRange($@"{NUGET_PACKAGES}/opentk.glcontrol/{GetVersion("OpenTK.GLControl", "release")}/lib/*");
 			}
 			else
 			{

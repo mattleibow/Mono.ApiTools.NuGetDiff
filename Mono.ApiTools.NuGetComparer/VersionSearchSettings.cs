@@ -1,6 +1,6 @@
 ﻿using NuGet.Versioning;
 
-namespace NuGetComparer
+namespace Mono.ApiTools.NuGetComparer
 {
 	public class VersionSearchSettings
 	{
