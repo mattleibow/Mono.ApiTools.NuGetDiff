@@ -6,24 +6,24 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
-namespace Mono.ApiTools.NuGetComparer
+namespace Mono.ApiTools
 {
-	public class PackageVersions
+	public class NuGetVersions
 	{
 		private static readonly SourceRepository source;
 		private static readonly SourceCacheContext cache;
 		private static readonly ILogger logger;
 
-		static PackageVersions()
+		static NuGetVersions()
 		{
 			source = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			cache = new SourceCacheContext();
 			logger = NullLogger.Instance;
 		}
 
-		public static async Task<NuGetVersion> GetLatestAsync(string id, VersionSearchSettings settings = null, CancellationToken cancellationToken = default)
+		public static async Task<NuGetVersion> GetLatestAsync(string id, Filter settings = null, CancellationToken cancellationToken = default)
 		{
-			settings = settings ?? new VersionSearchSettings();
+			settings = settings ?? new Filter();
 
 			NuGetVersion latestVersion = null;
 
@@ -58,6 +58,15 @@ namespace Mono.ApiTools.NuGetComparer
 			var versions = await byId.GetAllVersionsAsync(id, cache, logger, cancellationToken);
 
 			return versions.ToArray();
+		}
+		
+		public class Filter
+		{
+			public bool IncludePrerelease { get; set; }
+
+			public NuGetVersion MinimumVersion { get; set; }
+
+			public NuGetVersion MaximumVersion { get; set; }
 		}
 	}
 }

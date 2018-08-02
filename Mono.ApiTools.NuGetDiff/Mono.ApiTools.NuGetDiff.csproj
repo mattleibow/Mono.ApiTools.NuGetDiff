@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiffFormatted\Mono.ApiTools.ApiDiffFormatted.csproj" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiff\Mono.ApiTools.ApiDiff.csproj" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj" />
+    <ProjectReference Include="..\Mono.ApiTools.ApiDiffFormatted\Mono.ApiTools.ApiDiffFormatted.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\Mono.ApiTools.ApiDiff\Mono.ApiTools.ApiDiff.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

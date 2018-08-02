@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mono.ApiTools.NuGetComparer\Mono.ApiTools.NuGetComparer.csproj" />
+    <ProjectReference Include="..\Mono.ApiTools.NuGetDiff\Mono.ApiTools.NuGetDiff.csproj" />
   </ItemGroup>
 
 </Project>

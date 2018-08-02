@@ -5,9 +5,9 @@ using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 
-namespace Mono.ApiTools.NuGetComparer
+namespace Mono.ApiTools
 {
-	public class PackageDiff
+	public class NuGetDiffResult
 	{
 		// versions
 

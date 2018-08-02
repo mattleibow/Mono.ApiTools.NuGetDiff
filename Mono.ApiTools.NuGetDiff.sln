@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.NuGetComparer", "Mono.ApiTools.NuGetComparer\Mono.ApiTools.NuGetComparer.csproj", "{5B6A29EF-48A1-41F5-8EF2-351830816FCD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.NuGetDiff", "Mono.ApiTools.NuGetDiff\Mono.ApiTools.NuGetDiff.csproj", "{5B6A29EF-48A1-41F5-8EF2-351830816FCD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.NuGetComparer.Tests", "Mono.ApiTools.NuGetComparer.Tests\Mono.ApiTools.NuGetComparer.Tests.csproj", "{6F1EAD5A-DC43-4EDA-A262-C909AB242883}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.NuGetDiff.Tests", "Mono.ApiTools.NuGetDiff.Tests\Mono.ApiTools.NuGetDiff.Tests.csproj", "{6F1EAD5A-DC43-4EDA-A262-C909AB242883}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.ApiInfo", "Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj", "{8C79B11C-3767-43D5-A929-11D823F96643}"
 EndProject

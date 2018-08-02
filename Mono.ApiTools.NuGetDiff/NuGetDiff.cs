@@ -15,9 +15,9 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
-namespace Mono.ApiTools.NuGetComparer
+namespace Mono.ApiTools
 {
-	public class PackageComparer
+	public class NuGetDiff
 	{
 		private const int DefaultSaveBufferSize = 1024;
 		private const int DefaultCopyBufferSize = 81920;
@@ -27,7 +27,7 @@ namespace Mono.ApiTools.NuGetComparer
 		private static readonly SourceCacheContext cache;
 		private static readonly ILogger logger;
 
-		static PackageComparer()
+		static NuGetDiff()
 		{
 			source = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			cache = new SourceCacheContext();
@@ -53,61 +53,61 @@ namespace Mono.ApiTools.NuGetComparer
 		public bool SaveAssemblyXmlDiff { get; set; } = false;
 
 
-		// GeneratePackageDiffAsync
+		// GenerateAsync
 
-		public Task<PackageDiff> GeneratePackageDiffAsync(string id, string oldVersion, string newVersion, CancellationToken cancellationToken = default)
+		public Task<NuGetDiffResult> GenerateAsync(string id, string oldVersion, string newVersion, CancellationToken cancellationToken = default)
 		{
 			var oldId = new PackageIdentity(id, NuGetVersion.Parse(oldVersion));
 			var newId = new PackageIdentity(id, NuGetVersion.Parse(newVersion));
-			return GeneratePackageDiffAsync(oldId, newId, cancellationToken);
+			return GenerateAsync(oldId, newId, cancellationToken);
 		}
 
-		public Task<PackageDiff> GeneratePackageDiffAsync(string id, NuGetVersion oldVersion, NuGetVersion newVersion, CancellationToken cancellationToken = default)
+		public Task<NuGetDiffResult> GenerateAsync(string id, NuGetVersion oldVersion, NuGetVersion newVersion, CancellationToken cancellationToken = default)
 		{
 			var oldId = new PackageIdentity(id, oldVersion);
 			var newId = new PackageIdentity(id, newVersion);
-			return GeneratePackageDiffAsync(oldId, newId, cancellationToken);
+			return GenerateAsync(oldId, newId, cancellationToken);
 		}
 
-		public async Task<PackageDiff> GeneratePackageDiffAsync(PackageIdentity oldPackage, PackageIdentity newPackage, CancellationToken cancellationToken = default)
+		public async Task<NuGetDiffResult> GenerateAsync(PackageIdentity oldPackage, PackageIdentity newPackage, CancellationToken cancellationToken = default)
 		{
 			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			using (var newReader = await OpenPackageAsync(newPackage, cancellationToken).ConfigureAwait(false))
 			{
-				return await GeneratePackageDiffAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
+				return await GenerateAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
 			}
 		}
 
-		public Task<PackageDiff> GeneratePackageDiffAsync(string oldId, string oldVersion, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
+		public Task<NuGetDiffResult> GenerateAsync(string oldId, string oldVersion, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
 			var oldPackageId = new PackageIdentity(oldId, NuGetVersion.Parse(oldVersion));
-			return GeneratePackageDiffAsync(oldPackageId, newReader, cancellationToken);
+			return GenerateAsync(oldPackageId, newReader, cancellationToken);
 		}
 
-		public Task<PackageDiff> GeneratePackageDiffAsync(string oldId, NuGetVersion oldVersion, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
+		public Task<NuGetDiffResult> GenerateAsync(string oldId, NuGetVersion oldVersion, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
 			var oldPackageId = new PackageIdentity(oldId, oldVersion);
-			return GeneratePackageDiffAsync(oldPackageId, newReader, cancellationToken);
+			return GenerateAsync(oldPackageId, newReader, cancellationToken);
 		}
 
-		public async Task<PackageDiff> GeneratePackageDiffAsync(PackageIdentity oldPackage, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
+		public async Task<NuGetDiffResult> GenerateAsync(PackageIdentity oldPackage, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
 			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			{
-				return await GeneratePackageDiffAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
+				return await GenerateAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
 			}
 		}
 
-		public Task<PackageDiff> GeneratePackageDiffAsync(string oldPath, string newpath, CancellationToken cancellationToken = default)
+		public Task<NuGetDiffResult> GenerateAsync(string oldPath, string newpath, CancellationToken cancellationToken = default)
 		{
 			using (var oldReader = new PackageArchiveReader(oldPath))
 			using (var newReader = new PackageArchiveReader(newpath))
 			{
-				return GeneratePackageDiffAsync(oldReader, newReader, cancellationToken);
+				return GenerateAsync(oldReader, newReader, cancellationToken);
 			}
 		}
 
-		public async Task<PackageDiff> GeneratePackageDiffAsync(PackageArchiveReader oldReader, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
+		public async Task<NuGetDiffResult> GenerateAsync(PackageArchiveReader oldReader, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
 			// get the identities
 			var oldIdentity = await oldReader.GetIdentityAsync(cancellationToken).ConfigureAwait(false);
@@ -126,7 +126,7 @@ namespace Mono.ApiTools.NuGetComparer
 				NewItems = GetFrameworkAssemblies(fw, newItems),
 			}).ToArray();
 
-			return new PackageDiff
+			return new NuGetDiffResult
 			{
 				// versions
 				OldIdentity = oldIdentity,
@@ -230,11 +230,11 @@ namespace Mono.ApiTools.NuGetComparer
 		}
 
 
-		// GeneratePackageXmlDiffAsync
+		// GenerateXmlDiffAsync
 
-		public async Task<Stream> GeneratePackageXmlDiffAsync(PackageArchiveReader oldReader, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
+		public async Task<Stream> GenerateXmlDiffAsync(PackageArchiveReader oldReader, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
-			var packageDiff = await GeneratePackageDiffAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
+			var packageDiff = await GenerateAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
 
 			var xPackageDiff = CreatePackageDiff(packageDiff, cancellationToken);
 
@@ -246,63 +246,63 @@ namespace Mono.ApiTools.NuGetComparer
 		}
 
 
-		// SaveCompletePackageDiffToDirectoryAsync
+		// SaveCompleteDiffToDirectoryAsync
 
-		public Task SaveCompletePackageDiffToDirectoryAsync(string id, string oldVersion, string newVersion, string outputDirectory, CancellationToken cancellationToken = default)
+		public Task SaveCompleteDiffToDirectoryAsync(string id, string oldVersion, string newVersion, string outputDirectory, CancellationToken cancellationToken = default)
 		{
 			var oldId = new PackageIdentity(id, NuGetVersion.Parse(oldVersion));
 			var newId = new PackageIdentity(id, NuGetVersion.Parse(newVersion));
-			return SaveCompletePackageDiffToDirectoryAsync(oldId, newId, outputDirectory, cancellationToken);
+			return SaveCompleteDiffToDirectoryAsync(oldId, newId, outputDirectory, cancellationToken);
 		}
 
-		public Task SaveCompletePackageDiffToDirectoryAsync(string id, NuGetVersion oldVersion, NuGetVersion newVersion, string outputDirectory, CancellationToken cancellationToken = default)
+		public Task SaveCompleteDiffToDirectoryAsync(string id, NuGetVersion oldVersion, NuGetVersion newVersion, string outputDirectory, CancellationToken cancellationToken = default)
 		{
 			var oldId = new PackageIdentity(id, oldVersion);
 			var newId = new PackageIdentity(id, newVersion);
-			return SaveCompletePackageDiffToDirectoryAsync(oldId, newId, outputDirectory, cancellationToken);
+			return SaveCompleteDiffToDirectoryAsync(oldId, newId, outputDirectory, cancellationToken);
 		}
 
-		public async Task SaveCompletePackageDiffToDirectoryAsync(PackageIdentity oldPackage, PackageIdentity newPackage, string outputDirectory, CancellationToken cancellationToken = default)
+		public async Task SaveCompleteDiffToDirectoryAsync(PackageIdentity oldPackage, PackageIdentity newPackage, string outputDirectory, CancellationToken cancellationToken = default)
 		{
 			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			using (var newReader = await OpenPackageAsync(newPackage, cancellationToken).ConfigureAwait(false))
 			{
-				await SaveCompletePackageDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken).ConfigureAwait(false);
+				await SaveCompleteDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken).ConfigureAwait(false);
 			}
 		}
 
-		public Task SaveCompletePackageDiffToDirectoryAsync(string oldId, string oldVersion, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
+		public Task SaveCompleteDiffToDirectoryAsync(string oldId, string oldVersion, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
 		{
 			var oldPackageId = new PackageIdentity(oldId, NuGetVersion.Parse(oldVersion));
-			return SaveCompletePackageDiffToDirectoryAsync(oldPackageId, newReader, outputDirectory, cancellationToken);
+			return SaveCompleteDiffToDirectoryAsync(oldPackageId, newReader, outputDirectory, cancellationToken);
 		}
 
-		public Task SaveCompletePackageDiffToDirectoryAsync(string oldId, NuGetVersion oldVersion, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
+		public Task SaveCompleteDiffToDirectoryAsync(string oldId, NuGetVersion oldVersion, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
 		{
 			var oldPackageId = new PackageIdentity(oldId, oldVersion);
-			return SaveCompletePackageDiffToDirectoryAsync(oldPackageId, newReader, outputDirectory, cancellationToken);
+			return SaveCompleteDiffToDirectoryAsync(oldPackageId, newReader, outputDirectory, cancellationToken);
 		}
 
-		public async Task SaveCompletePackageDiffToDirectoryAsync(PackageIdentity oldPackage, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
+		public async Task SaveCompleteDiffToDirectoryAsync(PackageIdentity oldPackage, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
 		{
 			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			{
-				await SaveCompletePackageDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken).ConfigureAwait(false);
+				await SaveCompleteDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken).ConfigureAwait(false);
 			}
 		}
 
-		public Task SaveCompletePackageDiffToDirectoryAsync(string oldPath, string newpath, string outputDirectory, CancellationToken cancellationToken = default)
+		public Task SaveCompleteDiffToDirectoryAsync(string oldPath, string newpath, string outputDirectory, CancellationToken cancellationToken = default)
 		{
 			using (var oldReader = new PackageArchiveReader(oldPath))
 			using (var newReader = new PackageArchiveReader(newpath))
 			{
-				return SaveCompletePackageDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken);
+				return SaveCompleteDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken);
 			}
 		}
 
-		public async Task SaveCompletePackageDiffToDirectoryAsync(PackageArchiveReader oldReader, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
+		public async Task SaveCompleteDiffToDirectoryAsync(PackageArchiveReader oldReader, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			var packageDiff = await GeneratePackageDiffAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
+			var packageDiff = await GenerateAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
 
 			// create the base package diff
 			var xPackageDiff = CreatePackageDiff(packageDiff, cancellationToken);
@@ -479,7 +479,7 @@ namespace Mono.ApiTools.NuGetComparer
 		}
 
 
-		// ExtractPackageAsync
+		// ExtractCachedPackageAsync
 
 		public Task ExtractCachedPackageAsync(string id, string version, CancellationToken cancellationToken = default)
 		{
@@ -570,7 +570,7 @@ namespace Mono.ApiTools.NuGetComparer
 			return config;
 		}
 
-		private XDocument CreatePackageDiff(PackageDiff diff, CancellationToken cancellationToken = default)
+		private XDocument CreatePackageDiff(NuGetDiffResult diff, CancellationToken cancellationToken = default)
 		{
 			var xdoc = new XDocument(
 				new XElement("packages",

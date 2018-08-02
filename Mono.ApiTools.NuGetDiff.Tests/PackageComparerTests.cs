@@ -14,7 +14,7 @@ using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Mono.ApiTools.NuGetComparer.Tests
+namespace Mono.ApiTools.Tests
 {
 	public class PackageComparerTests
 	{
@@ -46,10 +46,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		[Fact]
 		public async Task TestComparePackageWithSameAssemblies()
 		{
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV30Number1, FormsV30Number2);
+			var diff = await comparer.GenerateAsync(FormsPackageId, FormsV30Number1, FormsV30Number2);
 
 			Assert.Equal(NuGetVersion.Parse(FormsV30Number1), diff.OldIdentity.Version);
 			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
@@ -66,10 +66,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		[Fact]
 		public async Task TestComparePackage()
 		{
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV20Number1, FormsV30Number2);
+			var diff = await comparer.GenerateAsync(FormsPackageId, FormsV20Number1, FormsV30Number2);
 
 			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
 			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
@@ -86,10 +86,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		[Fact]
 		public async Task TestCompareSamePackage()
 		{
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV20Number1, FormsV20Number1);
+			var diff = await comparer.GenerateAsync(FormsPackageId, FormsV20Number1, FormsV20Number1);
 
 			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
 			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.NewIdentity.Version);
@@ -113,10 +113,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 				await wc.DownloadFileTaskAsync(FormsV3Url2, newPath);
 			}
 
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(FormsPackageId, FormsV20Number1, new PackageArchiveReader(newPath));
+			var diff = await comparer.GenerateAsync(FormsPackageId, FormsV20Number1, new PackageArchiveReader(newPath));
 
 			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
 			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
@@ -142,10 +142,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 				await wc.DownloadFileTaskAsync(FormsV3Url2, newPath);
 			}
 
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			var diff = await comparer.GeneratePackageDiffAsync(oldPath, newPath);
+			var diff = await comparer.GenerateAsync(oldPath, newPath);
 
 			Assert.Equal(NuGetVersion.Parse(FormsV20Number1), diff.OldIdentity.Version);
 			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
@@ -164,10 +164,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		{
 			var diffDir = GenerateTestOutputPath();
 
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.IgnoreResolutionErrors = true;
 
-			await comparer.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
+			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 		}
 
 		[Fact]
@@ -175,10 +175,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		{
 			var diffDir = GenerateTestOutputPath();
 
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.IgnoreResolutionErrors = false;
 
-			var task = comparer.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
+			var task = comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 			await Assert.ThrowsAsync<AssemblyResolutionException>(() => task);
 		}
 
@@ -187,10 +187,10 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		{
 			var diffDir = GenerateTestOutputPath();
 
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			await comparer.SaveCompletePackageDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number1, SkiaV602Number1, diffDir);
+			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number1, SkiaV602Number1, diffDir);
 		}
 
 		[Fact]
@@ -198,7 +198,7 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		{
 			var diffDir = GenerateTestOutputPath();
 
-			var comparer = new PackageComparer();
+			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 
 			// download extra dependencies
@@ -210,7 +210,7 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
 
-			await comparer.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
+			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 		}
 
 		[Fact]
@@ -220,14 +220,14 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 			var allDir = GenerateTestOutputPath();
 
 			// generate diff with missing references
-			var missing = new PackageComparer();
+			var missing = new NuGetDiff();
 			missing.IgnoreResolutionErrors = true;
 			missing.IgnoreInheritedInterfaces = true;
 			missing.SaveAssemblyMarkdownDiff = true;
-			await missing.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, missingDir);
+			await missing.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, missingDir);
 
 			// generate diff with everything
-			var all = new PackageComparer();
+			var all = new NuGetDiff();
 			all.SearchPaths.AddRange(searchPaths);
 			all.IgnoreInheritedInterfaces = true;
 			all.SaveAssemblyMarkdownDiff = true;
@@ -238,7 +238,7 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Core.UI", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
-			await all.SaveCompletePackageDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, allDir);
+			await all.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, allDir);
 
 			// test the markdown files as the xml will be different as some dependency type will not be loaded
 			// are there the same files
@@ -259,7 +259,7 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 
 		private static string GenerateTestOutputPath()
 		{
-			return Path.Combine(Path.GetTempPath(), "Mono.ApiTools.NuGetComparer", Path.GetRandomFileName());
+			return Path.Combine(Path.GetTempPath(), "Mono.ApiTools", Path.GetRandomFileName());
 		}
 
 		private static IEnumerable<string> GetSearchPaths()
@@ -311,7 +311,7 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 			return paths;
 		}
 
-		private async Task AddDependencyAsync(PackageComparer comparer, string id, string version, string platform)
+		private async Task AddDependencyAsync(NuGetDiff comparer, string id, string version, string platform)
 		{
 			await comparer.ExtractCachedPackageAsync(id, version);
 			comparer.SearchPaths.Add(Path.Combine(comparer.GetCachedPackageDirectory(id, version), "lib", platform));

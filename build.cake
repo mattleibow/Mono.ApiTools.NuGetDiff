@@ -49,13 +49,13 @@ Task("Default")
     DownloadMonoSources("externals/mono-api-html", "mcs/tools/mono-api-html/mono-api-html.exe.sources");
 
     Information("Building solution...");
-    MSBuild("Mono.ApiTools.NuGetComparer.sln", cfg => cfg
+    MSBuild("Mono.ApiTools.NuGetDiff.sln", cfg => cfg
         .SetVerbosity(Verbosity.Normal)
         .WithRestore()
         .WithProperty("Configuration", new [] { configuration }));
 
     Information("Running tests...");
-    DotNetCoreTool("Mono.ApiTools.NuGetComparer.Tests/Mono.ApiTools.NuGetComparer.Tests.csproj", "xunit", "-verbose");
+    DotNetCoreTool("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", "xunit", "-verbose");
 });
 
 RunTarget(target);

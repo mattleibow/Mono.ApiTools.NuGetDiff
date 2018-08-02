@@ -7,14 +7,14 @@ using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Mono.ApiTools.NuGetComparer.Tests
+namespace Mono.ApiTools.Tests
 {
 	public class PackageVersionsTests
 	{
 		[Fact]
 		public async Task TestGetLatest()
 		{
-			var version = await PackageVersions.GetLatestAsync("Xamarin.Forms");
+			var version = await NuGetVersions.GetLatestAsync("Xamarin.Forms");
 
 			Assert.True(version >= NuGetVersion.Parse("3.1.0.637273"));
 		}
@@ -22,12 +22,12 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		[Fact]
 		public async Task TestGetLatestWithMax()
 		{
-			var settings = new VersionSearchSettings
+			var settings = new NuGetVersions.Filter
 			{
 				MaximumVersion = NuGetVersion.Parse("3.1.0")
 			};
 
-			var version = await PackageVersions.GetLatestAsync("Xamarin.Forms", settings);
+			var version = await NuGetVersions.GetLatestAsync("Xamarin.Forms", settings);
 
 			Assert.Equal(NuGetVersion.Parse("3.0.0.561731"), version);
 		}
@@ -35,12 +35,12 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		[Fact]
 		public async Task TestGetLatestWithMin()
 		{
-			var settings = new VersionSearchSettings
+			var settings = new NuGetVersions.Filter
 			{
 				MinimumVersion = NuGetVersion.Parse("2.0.0")
 			};
 
-			var version = await PackageVersions.GetLatestAsync("Xamarin.Forms", settings);
+			var version = await NuGetVersions.GetLatestAsync("Xamarin.Forms", settings);
 
 			Assert.True(version >= NuGetVersion.Parse("3.1.0.637273"));
 		}
@@ -48,13 +48,13 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		[Fact]
 		public async Task TestGetLatestWithMaxMin()
 		{
-			var settings = new VersionSearchSettings
+			var settings = new NuGetVersions.Filter
 			{
 				MaximumVersion = NuGetVersion.Parse("3.1.0"),
 				MinimumVersion = NuGetVersion.Parse("2.0.0")
 			};
 
-			var version = await PackageVersions.GetLatestAsync("Xamarin.Forms", settings);
+			var version = await NuGetVersions.GetLatestAsync("Xamarin.Forms", settings);
 
 			Assert.Equal(NuGetVersion.Parse("3.0.0.561731"), version);
 		}
@@ -62,13 +62,13 @@ namespace Mono.ApiTools.NuGetComparer.Tests
 		[Fact]
 		public async Task TestGetLatestWithReversedMaxMin()
 		{
-			var settings = new VersionSearchSettings
+			var settings = new NuGetVersions.Filter
 			{
 				MinimumVersion = NuGetVersion.Parse("3.1.0"),
 				MaximumVersion = NuGetVersion.Parse("2.0.0")
 			};
 
-			var version = await PackageVersions.GetLatestAsync("Xamarin.Forms", settings);
+			var version = await NuGetVersions.GetLatestAsync("Xamarin.Forms", settings);
 
 			Assert.Null(version);
 		}
