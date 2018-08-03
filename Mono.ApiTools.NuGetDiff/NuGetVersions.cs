@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Common;
@@ -21,48 +22,38 @@ namespace Mono.ApiTools
 			logger = NullLogger.Instance;
 		}
 
-		public static async Task<NuGetVersion> GetLatestAsync(string id, Filter settings = null, CancellationToken cancellationToken = default)
+		public static async Task<NuGetVersion> GetLatestAsync(string id, Filter filter = null, CancellationToken cancellationToken = default)
 		{
-			settings = settings ?? new Filter();
-
-			NuGetVersion latestVersion = null;
-
-			var versions = await GetAllAsync(id, cancellationToken);
-
-			foreach (var version in versions.Reverse())
-			{
-				// first check against settings
-				if (!settings.IncludePrerelease && version.IsPrerelease)
-					continue;
-				if (settings.MinimumVersion != null && version < settings.MinimumVersion)
-					continue;
-				if (settings.MaximumVersion != null && version > settings.MaximumVersion)
-					continue;
-
-				// check against last version
-				if (latestVersion != null && version < latestVersion)
-					continue;
-
-				// looks good
-				latestVersion = version;
-				break;
-			}
-
-			return latestVersion;
+			var versions = await EnumerateAllAsync(id, filter, cancellationToken);
+			return versions.Reverse().FirstOrDefault();
 		}
 
-		public static async Task<NuGetVersion[]> GetAllAsync(string id, CancellationToken cancellationToken = default)
+		public static async Task<NuGetVersion[]> GetAllAsync(string id, Filter filter = null, CancellationToken cancellationToken = default)
 		{
-			var byId = await source.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
-
-			var versions = await byId.GetAllVersionsAsync(id, cache, logger, cancellationToken);
-
+			var versions = await EnumerateAllAsync(id, filter, cancellationToken);
 			return versions.ToArray();
 		}
-		
+
+		private static async Task<IEnumerable<NuGetVersion>> EnumerateAllAsync(string id, Filter filter, CancellationToken cancellationToken)
+		{
+			filter = filter ?? new Filter();
+
+			var resource = await source.GetResourceAsync<MetadataResource>(cancellationToken);
+
+			var versions = await resource.GetVersions(id, filter.IncludePrerelease, filter.IncludeUnlisted, cache, logger, cancellationToken);
+
+			versions = versions.Where(v =>
+				(filter.MinimumVersion == null || v >= filter.MinimumVersion) &&
+				(filter.MaximumVersion == null || v < filter.MaximumVersion));
+
+			return versions;
+		}
+
 		public class Filter
 		{
 			public bool IncludePrerelease { get; set; }
+
+			public bool IncludeUnlisted { get; set; }
 
 			public NuGetVersion MinimumVersion { get; set; }
 
