@@ -45,7 +45,7 @@ namespace Mono.ApiTools
 
 		public bool IgnoreInheritedInterfaces { get; set; } = false;
 
-		public bool IgnoreAddedAssemblies { get; set; } = true;
+		public bool IgnoreAddedAssemblies { get; set; } = false;
 
 		public bool SaveAssemblyApiInfo { get; set; } = false;
 
@@ -314,8 +314,8 @@ namespace Mono.ApiTools
 			var totalExtra = 0;
 			var totalWarning = 0;
 
-			var unchanged = packageDiff.UnchangedAssemblies.Values.SelectMany(a => a).ToList();
-			var added = packageDiff.AddedAssemblies.Values.SelectMany(a => a).ToList();
+			var unchanged = packageDiff.GetAllUnchangedAssemblies();
+			var added = packageDiff.GetAllAddedAssemblies();
 			var assemblies = IgnoreAddedAssemblies ? unchanged : unchanged.Union(added);
 
 			foreach (var assembly in assemblies)
@@ -635,18 +635,22 @@ namespace Mono.ApiTools
 
 			XElement CreateAssemblies(NuGetFramework framework)
 			{
-				var assemblies = IgnoreAddedAssemblies
-					? diff.UnchangedAssemblies
-					: diff.UnchangedAssemblies.Union(diff.AddedAssemblies).ToDictionary(p => p.Key, p => p.Value);
+				var assemblies = new List<string>();
 
-				if (!assemblies.ContainsKey(framework))
+				if (diff.UnchangedAssemblies.TryGetValue(framework, out var unchanged))
+					assemblies.AddRange(unchanged);
+				if (!IgnoreAddedAssemblies && diff.AddedAssemblies.TryGetValue(framework, out var added))
+					assemblies.AddRange(added);
+
+				if (assemblies.Count == 0)
 					return null;
 
 				return
-					new XElement("assemblies", assemblies[framework].Select(ass =>
+					new XElement("assemblies", assemblies.Select(ass =>
 						new XElement("assembly",
 							new XAttribute("name", Path.GetFileNameWithoutExtension(ass)),
-							new XAttribute("path", ass))
+							new XAttribute("path", ass),
+							CreateAssemblyPresence(ass))
 						)
 					);
 			}
@@ -666,6 +670,17 @@ namespace Mono.ApiTools
 					return new XAttribute("presence", "extra");
 
 				if (diff.RemovedFrameworks.Contains(framework))
+					return new XAttribute("presence", "missing");
+
+				return null;
+			}
+
+			XAttribute CreateAssemblyPresence(string assembly)
+			{
+				if (diff.GetAllAddedAssemblies().Contains(assembly))
+					return new XAttribute("presence", "extra");
+
+				if (diff.GetAllRemovedAssemblies().Contains(assembly))
 					return new XAttribute("presence", "missing");
 
 				return null;

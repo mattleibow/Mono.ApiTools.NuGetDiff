@@ -41,6 +41,21 @@ namespace Mono.ApiTools
 				.ToArray();
 		}
 
+		public string[] GetAllAddedAssemblies()
+		{
+			return AddedAssemblies.Values.SelectMany(a => a).ToArray();
+		}
+
+		public string[] GetAllRemovedAssemblies()
+		{
+			return RemovedAssemblies.Values.SelectMany(a => a).ToArray();
+		}
+
+		public string[] GetAllUnchangedAssemblies()
+		{
+			return UnchangedAssemblies.Values.SelectMany(a => a).ToArray();
+		}
+
 		internal void Write(TextWriter writer)
 		{
 			writer.WriteLine("Added Target Frameworks:");

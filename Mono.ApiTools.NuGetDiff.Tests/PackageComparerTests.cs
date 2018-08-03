@@ -186,7 +186,6 @@ namespace Mono.ApiTools.Tests
 
 			var comparer = new NuGetDiff();
 			comparer.IgnoreResolutionErrors = true;
-			comparer.IgnoreAddedAssemblies = false;
 
 			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, null, FormsV31Number1, diffDir);
 		}
@@ -198,6 +197,7 @@ namespace Mono.ApiTools.Tests
 
 			var comparer = new NuGetDiff();
 			comparer.IgnoreResolutionErrors = true;
+			comparer.IgnoreAddedAssemblies = true;
 
 			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 		}
@@ -232,6 +232,7 @@ namespace Mono.ApiTools.Tests
 
 			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveAssemblyMarkdownDiff = true;
 
 			// download extra dependencies
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.AppCompat", "25.4.0.2", "MonoAndroid70");
@@ -241,8 +242,12 @@ namespace Mono.ApiTools.Tests
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Core.UI", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Tizen.NET", "4.0.0", "netstandard2.0");
 
 			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
+
+			var files = Directory.GetFiles(diffDir, "*.md", SearchOption.AllDirectories);
+			Assert.Equal(27, files.Length);
 		}
 
 		[Fact]
@@ -265,6 +270,7 @@ namespace Mono.ApiTools.Tests
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Core.UI", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Tizen.NET", "4.0.0", "netstandard2.0");
 
 			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
 		}
@@ -280,6 +286,7 @@ namespace Mono.ApiTools.Tests
 			missing.IgnoreResolutionErrors = true;
 			missing.IgnoreInheritedInterfaces = true;
 			missing.SaveAssemblyMarkdownDiff = true;
+			missing.IgnoreAddedAssemblies = true;
 			await missing.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, missingDir);
 
 			// generate diff with everything
@@ -287,6 +294,7 @@ namespace Mono.ApiTools.Tests
 			all.SearchPaths.AddRange(searchPaths);
 			all.IgnoreInheritedInterfaces = true;
 			all.SaveAssemblyMarkdownDiff = true;
+			all.IgnoreAddedAssemblies = true;
 			await AddDependencyAsync(all, "Xamarin.Android.Support.v7.AppCompat", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Fragment", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Core.Utils", "25.4.0.2", "MonoAndroid70");
@@ -294,6 +302,7 @@ namespace Mono.ApiTools.Tests
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Core.UI", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(all, "Tizen.NET", "4.0.0", "netstandard2.0");
 			await all.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, allDir);
 
 			// test the markdown files as the xml will be different as some dependency type will not be loaded
