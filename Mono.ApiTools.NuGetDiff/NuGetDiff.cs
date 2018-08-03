@@ -34,6 +34,7 @@ namespace Mono.ApiTools
 			logger = NullLogger.Instance;
 		}
 
+
 		// Properties
 
 		public List<string> SearchPaths { get; set; } = new List<string>();
@@ -481,21 +482,33 @@ namespace Mono.ApiTools
 
 		// ExtractCachedPackageAsync
 
-		public Task ExtractCachedPackageAsync(string id, string version, CancellationToken cancellationToken = default)
+		public Task<string> ExtractCachedPackageAsync(string id, string version, CancellationToken cancellationToken = default)
 		{
 			var identity = new PackageIdentity(id, NuGetVersion.Parse(version));
 			return ExtractCachedPackageAsync(identity, cancellationToken);
 		}
 
-		public Task ExtractCachedPackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
+		public Task<string> ExtractCachedPackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
 		{
 			var identity = new PackageIdentity(id, version);
 			return ExtractCachedPackageAsync(identity, cancellationToken);
 		}
 
-		public Task ExtractCachedPackageAsync(PackageIdentity identity, CancellationToken cancellationToken = default)
+		public async Task<string> ExtractCachedPackageAsync(PackageIdentity identity, CancellationToken cancellationToken = default)
 		{
-			return ExtractPackageToDirectoryAsync(identity, GetCachedPackageDirectory(identity));
+			var dir = GetCachedPackageDirectory(identity);
+
+			// a quick check to make sure the package has not already beed extracted
+			var nupkg = GetCachedPackagePath(identity);
+			var extractedFlag = $"{nupkg}.extracted";
+			if (File.Exists(nupkg) && File.Exists(extractedFlag))
+				return dir;
+
+			await ExtractPackageToDirectoryAsync(identity, dir);
+
+			File.WriteAllText(extractedFlag, "");
+
+			return dir;
 		}
 
 
