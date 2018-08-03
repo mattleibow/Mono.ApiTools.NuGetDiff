@@ -51,10 +51,9 @@ Task("Clean")
     CleanDirectories("externals");
 });
 
-Task("Default")
+Task("Build")
     .Does(() =>
 {
-    Information("Downloading sources...");
     DownloadMonoSources("externals/mono-api-info", "mcs/tools/corcompare/mono-api-info.exe.sources");
     DownloadMonoSources("externals/mono-api-diff", "mcs/tools/mono-api-diff/mono-api-diff.exe.sources");
     DownloadMonoSources("externals/mono-api-html", "mcs/tools/mono-api-html/mono-api-html.exe.sources");
@@ -63,6 +62,20 @@ Task("Default")
         .SetConfiguration(configuration)
         .SetVerbosity(Verbosity.Minimal)
         .WithRestore()
+        .WithProperty("Version", assemblyVersion)
+        .WithProperty("FileVersion", fileVersion)
+        .WithProperty("InformationalVersion", infoVersion);
+
+    MSBuild("Mono.ApiTools.NuGetDiff.sln", settings);
+});
+
+Task("Pack")
+    .IsDependentOn("Build")
+    .Does(() =>
+{
+    var settings = new MSBuildSettings()
+        .SetConfiguration(configuration)
+        .SetVerbosity(Verbosity.Minimal)
         .WithProperty("IncludeSymbols", "True")
         .WithProperty("PackageVersion", packageVersion)
         .WithProperty("Version", assemblyVersion)
@@ -70,19 +83,26 @@ Task("Default")
         .WithProperty("InformationalVersion", infoVersion)
         .WithProperty("PackageOutputPath", MakeAbsolute((DirectoryPath)"./output/").FullPath);
 
-    Information("Building solution...");
-    MSBuild("Mono.ApiTools.NuGetDiff.sln", settings);
-
-    Information("Packing NuGets...");
     // stable
     settings = settings.WithTarget("Pack");
     MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+
     // pre-release
     settings.WithProperty("PackageVersion", packageVersion + "-preview-" + previewNumber);
     MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+});
 
+Task("Test")
+    .IsDependentOn("Build")
+    .Does(() =>
+{
     Information("Running tests...");
     DotNetCoreTool("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", "xunit", "-verbose");
 });
+
+Task("Default")
+    .IsDependentOn("Build")
+    .IsDependentOn("Pack")
+    .IsDependentOn("Test");
 
 RunTarget(target);

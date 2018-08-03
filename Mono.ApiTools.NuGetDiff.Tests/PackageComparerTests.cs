@@ -259,7 +259,10 @@ namespace Mono.ApiTools.Tests
 
 		private static string GenerateTestOutputPath()
 		{
-			return Path.Combine(Path.GetTempPath(), "Mono.ApiTools", Path.GetRandomFileName());
+			var dir = Path.Combine(Path.GetTempPath(), "Mono.ApiTools.NuGetDiff");
+			if (!Directory.Exists(dir))
+				Directory.CreateDirectory(dir);
+			return Path.Combine(dir, Path.GetRandomFileName());
 		}
 
 		private static IEnumerable<string> GetSearchPaths()
