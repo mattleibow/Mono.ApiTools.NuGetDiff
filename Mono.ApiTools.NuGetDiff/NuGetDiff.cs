@@ -45,6 +45,8 @@ namespace Mono.ApiTools
 
 		public bool IgnoreInheritedInterfaces { get; set; } = false;
 
+		public bool IgnoreAddedAssemblies { get; set; } = true;
+
 		public bool SaveAssemblyApiInfo { get; set; } = false;
 
 		public bool SaveAssemblyHtmlDiff { get; set; } = false;
@@ -58,21 +60,21 @@ namespace Mono.ApiTools
 
 		public Task<NuGetDiffResult> GenerateAsync(string id, string oldVersion, string newVersion, CancellationToken cancellationToken = default)
 		{
-			var oldId = new PackageIdentity(id, NuGetVersion.Parse(oldVersion));
+			var oldId = string.IsNullOrEmpty(oldVersion) ? null : new PackageIdentity(id, NuGetVersion.Parse(oldVersion));
 			var newId = new PackageIdentity(id, NuGetVersion.Parse(newVersion));
 			return GenerateAsync(oldId, newId, cancellationToken);
 		}
 
 		public Task<NuGetDiffResult> GenerateAsync(string id, NuGetVersion oldVersion, NuGetVersion newVersion, CancellationToken cancellationToken = default)
 		{
-			var oldId = new PackageIdentity(id, oldVersion);
+			var oldId = oldVersion == null ? null : new PackageIdentity(id, oldVersion);
 			var newId = new PackageIdentity(id, newVersion);
 			return GenerateAsync(oldId, newId, cancellationToken);
 		}
 
 		public async Task<NuGetDiffResult> GenerateAsync(PackageIdentity oldPackage, PackageIdentity newPackage, CancellationToken cancellationToken = default)
 		{
-			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
+			using (var oldReader = oldPackage == null ? null : await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			using (var newReader = await OpenPackageAsync(newPackage, cancellationToken).ConfigureAwait(false))
 			{
 				return await GenerateAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
@@ -81,19 +83,19 @@ namespace Mono.ApiTools
 
 		public Task<NuGetDiffResult> GenerateAsync(string oldId, string oldVersion, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
-			var oldPackageId = new PackageIdentity(oldId, NuGetVersion.Parse(oldVersion));
+			var oldPackageId = string.IsNullOrEmpty(oldVersion) ? null : new PackageIdentity(oldId, NuGetVersion.Parse(oldVersion));
 			return GenerateAsync(oldPackageId, newReader, cancellationToken);
 		}
 
 		public Task<NuGetDiffResult> GenerateAsync(string oldId, NuGetVersion oldVersion, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
-			var oldPackageId = new PackageIdentity(oldId, oldVersion);
+			var oldPackageId = oldVersion == null ? null : new PackageIdentity(oldId, oldVersion);
 			return GenerateAsync(oldPackageId, newReader, cancellationToken);
 		}
 
 		public async Task<NuGetDiffResult> GenerateAsync(PackageIdentity oldPackage, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
-			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
+			using (var oldReader = oldPackage == null ? null : await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			{
 				return await GenerateAsync(oldReader, newReader, cancellationToken).ConfigureAwait(false);
 			}
@@ -101,7 +103,7 @@ namespace Mono.ApiTools
 
 		public Task<NuGetDiffResult> GenerateAsync(string oldPath, string newpath, CancellationToken cancellationToken = default)
 		{
-			using (var oldReader = new PackageArchiveReader(oldPath))
+			using (var oldReader = string.IsNullOrEmpty(oldPath) ? null : new PackageArchiveReader(oldPath))
 			using (var newReader = new PackageArchiveReader(newpath))
 			{
 				return GenerateAsync(oldReader, newReader, cancellationToken);
@@ -111,11 +113,11 @@ namespace Mono.ApiTools
 		public async Task<NuGetDiffResult> GenerateAsync(PackageArchiveReader oldReader, PackageArchiveReader newReader, CancellationToken cancellationToken = default)
 		{
 			// get the identities
-			var oldIdentity = await oldReader.GetIdentityAsync(cancellationToken).ConfigureAwait(false);
+			var oldIdentity = oldReader == null ? null : await oldReader.GetIdentityAsync(cancellationToken).ConfigureAwait(false);
 			var newIdentity = await newReader.GetIdentityAsync(cancellationToken).ConfigureAwait(false);
 
 			// get the items
-			var oldItems = await oldReader.GetLibItemsAsync(cancellationToken).ConfigureAwait(false);
+			var oldItems = oldReader == null ? Enumerable.Empty<FrameworkSpecificGroup>() : await oldReader.GetLibItemsAsync(cancellationToken).ConfigureAwait(false);
 			var newItems = await newReader.GetLibItemsAsync(cancellationToken).ConfigureAwait(false);
 
 			// create a new collection for the updates
@@ -251,21 +253,21 @@ namespace Mono.ApiTools
 
 		public Task SaveCompleteDiffToDirectoryAsync(string id, string oldVersion, string newVersion, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			var oldId = new PackageIdentity(id, NuGetVersion.Parse(oldVersion));
+			var oldId = string.IsNullOrEmpty(oldVersion) ? null : new PackageIdentity(id, NuGetVersion.Parse(oldVersion));
 			var newId = new PackageIdentity(id, NuGetVersion.Parse(newVersion));
 			return SaveCompleteDiffToDirectoryAsync(oldId, newId, outputDirectory, cancellationToken);
 		}
 
 		public Task SaveCompleteDiffToDirectoryAsync(string id, NuGetVersion oldVersion, NuGetVersion newVersion, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			var oldId = new PackageIdentity(id, oldVersion);
+			var oldId = oldVersion == null ? null : new PackageIdentity(id, oldVersion);
 			var newId = new PackageIdentity(id, newVersion);
 			return SaveCompleteDiffToDirectoryAsync(oldId, newId, outputDirectory, cancellationToken);
 		}
 
 		public async Task SaveCompleteDiffToDirectoryAsync(PackageIdentity oldPackage, PackageIdentity newPackage, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
+			using (var oldReader = oldPackage == null ? null : await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			using (var newReader = await OpenPackageAsync(newPackage, cancellationToken).ConfigureAwait(false))
 			{
 				await SaveCompleteDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken).ConfigureAwait(false);
@@ -274,19 +276,19 @@ namespace Mono.ApiTools
 
 		public Task SaveCompleteDiffToDirectoryAsync(string oldId, string oldVersion, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			var oldPackageId = new PackageIdentity(oldId, NuGetVersion.Parse(oldVersion));
+			var oldPackageId = string.IsNullOrEmpty(oldVersion) ? null : new PackageIdentity(oldId, NuGetVersion.Parse(oldVersion));
 			return SaveCompleteDiffToDirectoryAsync(oldPackageId, newReader, outputDirectory, cancellationToken);
 		}
 
 		public Task SaveCompleteDiffToDirectoryAsync(string oldId, NuGetVersion oldVersion, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			var oldPackageId = new PackageIdentity(oldId, oldVersion);
+			var oldPackageId = oldVersion == null ? null : new PackageIdentity(oldId, oldVersion);
 			return SaveCompleteDiffToDirectoryAsync(oldPackageId, newReader, outputDirectory, cancellationToken);
 		}
 
 		public async Task SaveCompleteDiffToDirectoryAsync(PackageIdentity oldPackage, PackageArchiveReader newReader, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			using (var oldReader = await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
+			using (var oldReader = oldPackage == null ? null : await OpenPackageAsync(oldPackage, cancellationToken).ConfigureAwait(false))
 			{
 				await SaveCompleteDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken).ConfigureAwait(false);
 			}
@@ -294,7 +296,7 @@ namespace Mono.ApiTools
 
 		public Task SaveCompleteDiffToDirectoryAsync(string oldPath, string newpath, string outputDirectory, CancellationToken cancellationToken = default)
 		{
-			using (var oldReader = new PackageArchiveReader(oldPath))
+			using (var oldReader = string.IsNullOrEmpty(oldPath) ? null : new PackageArchiveReader(oldPath))
 			using (var newReader = new PackageArchiveReader(newpath))
 			{
 				return SaveCompleteDiffToDirectoryAsync(oldReader, newReader, outputDirectory, cancellationToken);
@@ -312,12 +314,17 @@ namespace Mono.ApiTools
 			var totalExtra = 0;
 			var totalWarning = 0;
 
-			foreach (var assembly in packageDiff.UnchangedAssemblies.Values.SelectMany(a => a))
+			var unchanged = packageDiff.UnchangedAssemblies.Values.SelectMany(a => a).ToList();
+			var added = packageDiff.AddedAssemblies.Values.SelectMany(a => a).ToList();
+			var assemblies = IgnoreAddedAssemblies ? unchanged : unchanged.Union(added);
+
+			foreach (var assembly in assemblies)
 			{
 				var baseName = Path.Combine(outputDirectory, GetOutputFilenameBase(assembly));
+				var isNew = added.Contains(assembly);
 
 				// load the assembly info and generate the diff
-				using (var oldInfo = await GenerateAssemblyApiInfoAsync(oldReader, assembly, cancellationToken).ConfigureAwait(false))
+				using (var oldInfo = isNew ? CreateEmptyApiInfo(assembly) : await GenerateAssemblyApiInfoAsync(oldReader, assembly, cancellationToken).ConfigureAwait(false))
 				using (var newInfo = await GenerateAssemblyApiInfoAsync(newReader, assembly, cancellationToken).ConfigureAwait(false))
 				using (var xmlDiff = await GenerateAssemblyXmlDiffAsync(oldInfo, newInfo, cancellationToken).ConfigureAwait(false))
 				{
@@ -404,7 +411,7 @@ namespace Mono.ApiTools
 			// save the package diff
 			if (!Directory.Exists(outputDirectory))
 				Directory.CreateDirectory(outputDirectory);
-			var diffPath = Path.Combine(outputDirectory, $"{packageDiff.OldIdentity.Id}.nupkg.diff.xml");
+			var diffPath = Path.Combine(outputDirectory, $"{(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}.nupkg.diff.xml");
 			xPackageDiff.Save(diffPath);
 		}
 
@@ -571,6 +578,24 @@ namespace Mono.ApiTools
 
 		// Private members
 
+		private Stream CreateEmptyApiInfo(string assemblyPath)
+		{
+			var xdoc = new XDocument(new XElement("assemblies",
+				new XElement("assembly",
+					new XAttribute("name", Path.GetFileNameWithoutExtension(assemblyPath)),
+					new XAttribute("version", "0.0.0.0"),
+					new XElement("attributes"),
+					new XElement("namespaces")
+				)
+			));
+
+			var stream = new MemoryStream();
+			xdoc.Save(stream);
+			stream.Position = 0;
+
+			return stream;
+		}
+
 		private ApiInfoConfig CreateApiInfoConfig()
 		{
 			var config = new ApiInfoConfig();
@@ -588,8 +613,8 @@ namespace Mono.ApiTools
 			var xdoc = new XDocument(
 				new XElement("packages",
 					new XElement("package",
-						new XAttribute("id", diff.OldIdentity.Id),
-						new XAttribute("version", diff.OldIdentity.Version),
+						new XAttribute("id", (diff.OldIdentity ?? diff.NewIdentity).Id),
+						diff.OldIdentity != null ? new XAttribute("version", diff.OldIdentity.Version) : null,
 						new XElement("warnings", CreateWarnings().Select(w =>
 							new XElement("warning", new XAttribute("text", w)))),
 						new XElement("frameworks", diff.GetAllFrameworks().Select(fw =>
@@ -610,13 +635,15 @@ namespace Mono.ApiTools
 
 			XElement CreateAssemblies(NuGetFramework framework)
 			{
-				var unchanged = diff.UnchangedAssemblies;
+				var assemblies = IgnoreAddedAssemblies
+					? diff.UnchangedAssemblies
+					: diff.UnchangedAssemblies.Union(diff.AddedAssemblies).ToDictionary(p => p.Key, p => p.Value);
 
-				if (!unchanged.ContainsKey(framework))
+				if (!assemblies.ContainsKey(framework))
 					return null;
 
 				return
-					new XElement("assemblies", unchanged[framework].Select(ass =>
+					new XElement("assemblies", assemblies[framework].Select(ass =>
 						new XElement("assembly",
 							new XAttribute("name", Path.GetFileNameWithoutExtension(ass)),
 							new XAttribute("path", ass))
@@ -626,11 +653,11 @@ namespace Mono.ApiTools
 
 			IEnumerable<string> CreateWarnings()
 			{
-				if (diff.OldIdentity.Id != diff.NewIdentity.Id)
-					yield return $"Package IDs not equal: {diff.OldIdentity.Id}, {diff.NewIdentity.Id}";
+				if (diff.OldIdentity?.Id != diff.NewIdentity.Id)
+					yield return $"Package IDs not equal: {diff.OldIdentity?.Id}, {diff.NewIdentity.Id}";
 
-				if (diff.OldIdentity.Version != diff.NewIdentity.Version)
-					yield return $"Package versions not equal: {diff.OldIdentity.Version.ToNormalizedString()}, {diff.NewIdentity.Version.ToNormalizedString()}";
+				if (diff.OldIdentity?.Version != diff.NewIdentity.Version)
+					yield return $"Package versions not equal: {diff.OldIdentity?.Version.ToNormalizedString()}, {diff.NewIdentity.Version.ToNormalizedString()}";
 			}
 
 			XAttribute CreatePresence(NuGetFramework framework)

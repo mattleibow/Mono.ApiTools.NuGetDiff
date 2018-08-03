@@ -44,6 +44,26 @@ namespace Mono.ApiTools.Tests
 		}
 
 		[Fact]
+		public async Task TestComparePackageWithNoOldVersion()
+		{
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+
+			var diff = await comparer.GenerateAsync(FormsPackageId, null, FormsV30Number2);
+
+			Assert.Null(diff.OldIdentity);
+			Assert.Equal(NuGetVersion.Parse(FormsV30Number2), diff.NewIdentity.Version);
+
+			Assert.NotEmpty(diff.AddedFrameworks);
+			Assert.Empty(diff.RemovedFrameworks);
+			Assert.Empty(diff.UnchangedFrameworks);
+
+			Assert.NotEmpty(diff.AddedAssemblies);
+			Assert.Empty(diff.RemovedAssemblies);
+			Assert.Empty(diff.UnchangedAssemblies);
+		}
+
+		[Fact]
 		public async Task TestComparePackageWithSameAssemblies()
 		{
 			var comparer = new NuGetDiff();
@@ -160,6 +180,18 @@ namespace Mono.ApiTools.Tests
 		}
 
 		[Fact]
+		public async Task TestCompletePackageDiffIsGeneratedCorrectlyWithoutAllReferencesAndNoOldVersion()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.IgnoreResolutionErrors = true;
+			comparer.IgnoreAddedAssemblies = false;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, null, FormsV31Number1, diffDir);
+		}
+
+		[Fact]
 		public async Task TestCompletePackageDiffIsGeneratedCorrectlyWithoutAllReferences()
 		{
 			var diffDir = GenerateTestOutputPath();
@@ -200,6 +232,30 @@ namespace Mono.ApiTools.Tests
 
 			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
+
+			// download extra dependencies
+			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.AppCompat", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Fragment", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Core.Utils", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Compat", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Core.UI", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.CardView", "25.4.0.2", "MonoAndroid70");
+			await AddDependencyAsync(comparer, "Xamarin.Android.Support.Design", "25.4.0.2", "MonoAndroid70");
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
+		}
+
+		[Fact]
+		public async Task TestCompletePackageDiffIsGeneratedCorrectlyWithAllAssemblyInfo()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveAssemblyApiInfo = true;
+			comparer.SaveAssemblyHtmlDiff = true;
+			comparer.SaveAssemblyMarkdownDiff = true;
+			comparer.SaveAssemblyXmlDiff = true;
 
 			// download extra dependencies
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.AppCompat", "25.4.0.2", "MonoAndroid70");
