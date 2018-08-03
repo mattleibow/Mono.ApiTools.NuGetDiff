@@ -16,7 +16,7 @@ var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
 
 void DownloadMonoSources(DirectoryPath dest, params string[] urls)
 {
-    var rootUrl = $"https://github.com/mattleibow/mono/raw/mattleibow/make-library";
+    var rootUrl = $"https://github.com/mono/mono/raw/c32af8905b5d672f58acad6fc9e08bf61375b850";
 
     EnsureDirectoryExists(dest);
     foreach (var originalUrl in urls) {
