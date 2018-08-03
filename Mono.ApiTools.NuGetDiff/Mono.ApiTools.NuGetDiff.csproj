@@ -11,6 +11,9 @@
   <ItemGroup>
     <PackageReference Include="NuGet.Packaging" Version="4.7.0" />
     <PackageReference Include="NuGet.Protocol" Version="4.7.0" />
+
+    <!-- TEMP WORKAROUND UNTIL MONO PR IS MERGED -->
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
   </ItemGroup>
 
   <ItemGroup>
