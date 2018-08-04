@@ -23,13 +23,17 @@ namespace Mono.ApiTools
 
 		public NuGetFramework[] UnchangedFrameworks { get; set; }
 
+		public Dictionary<NuGetFramework, NuGetFramework> SimilarFrameworks { get; set; }
+
 		// assembly diff
 
 		public Dictionary<NuGetFramework, string[]> AddedAssemblies { get; set; }
 
 		public Dictionary<NuGetFramework, string[]> RemovedAssemblies { get; set; }
 
-		public Dictionary<NuGetFramework, string[]> UnchangedAssemblies { get; set; }
+		public Dictionary<NuGetFramework, (string newPath, string oldPath)[]> UnchangedAssemblies { get; set; }
+
+		public Dictionary<NuGetFramework, (string newPath, string oldPath)[]> SimilarAssemblies { get; set; }
 
 		public NuGetFramework[] GetAllFrameworks()
 		{
@@ -51,7 +55,7 @@ namespace Mono.ApiTools
 			return RemovedAssemblies.Values.SelectMany(a => a).ToArray();
 		}
 
-		public string[] GetAllUnchangedAssemblies()
+		public (string newPath, string oldPath)[] GetAllUnchangedAssemblies()
 		{
 			return UnchangedAssemblies.Values.SelectMany(a => a).ToArray();
 		}

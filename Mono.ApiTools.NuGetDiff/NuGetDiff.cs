@@ -47,6 +47,8 @@ namespace Mono.ApiTools
 
 		public bool IgnoreAddedAssemblies { get; set; } = false;
 
+		public bool IgnoreSimilarFrameworks { get; set; } = false;
+
 		public bool SaveAssemblyApiInfo { get; set; } = false;
 
 		public bool SaveAssemblyHtmlDiff { get; set; } = false;
@@ -129,7 +131,7 @@ namespace Mono.ApiTools
 				NewItems = GetFrameworkAssemblies(fw, newItems),
 			}).ToArray();
 
-			return new NuGetDiffResult
+			var result = new NuGetDiffResult
 			{
 				// versions
 				OldIdentity = oldIdentity,
@@ -139,29 +141,120 @@ namespace Mono.ApiTools
 				AddedFrameworks = mergedGroup.Where(g => !g.OldItems.Any()).Select(g => g.Framework).ToArray(),
 				RemovedFrameworks = mergedGroup.Where(g => !g.NewItems.Any()).Select(g => g.Framework).ToArray(),
 				UnchangedFrameworks = mergedGroup.Where(g => g.OldItems.Any() && g.NewItems.Any()).Select(g => g.Framework).ToArray(),
+				SimilarFrameworks = new Dictionary<NuGetFramework, NuGetFramework>(),
 
 				// assemblies
-				AddedAssemblies = GetAssemblies(g => g.NewItems.Except(g.OldItems)),
-				RemovedAssemblies = GetAssemblies(g => g.OldItems.Except(g.NewItems)),
-				UnchangedAssemblies = GetAssemblies(g => g.OldItems.Intersect(g.NewItems)),
+				AddedAssemblies = new Dictionary<NuGetFramework, string[]>(),
+				RemovedAssemblies = new Dictionary<NuGetFramework, string[]>(),
+				UnchangedAssemblies = new Dictionary<NuGetFramework, (string, string)[]>(),
+				SimilarAssemblies = new Dictionary<NuGetFramework, (string, string)[]>()
 			};
 
-			Dictionary<NuGetFramework, string[]> GetAssemblies(Func<FrameworkGroup, IEnumerable<string>> filter)
+			// using the assembly "name" as a matcher, sort them into the groups
+			foreach (var group in mergedGroup)
 			{
-				return mergedGroup
-					.Select(g => new { g.Framework, Items = filter(g).ToArray() })
-					.Where(g => g.Items.Any())
-					.ToDictionary(g => g.Framework, g => g.Items);
+				var added = new List<string>();
+				var removed = new List<string>();
+				var unchanged = new List<(string, string)>();
+
+				foreach (var (path, name) in group.NewItems)
+				{
+					var match = group.OldItems.FirstOrDefault(i => i.name == name);
+					if (match.path != null)
+						unchanged.Add((path, match.path));
+					else
+						added.Add(path);
+				}
+				foreach (var (path, name) in group.OldItems)
+				{
+					if (!group.NewItems.Any(i => i.name == name))
+						removed.Add(path);
+				}
+
+				if (added.Count > 0)
+					result.AddedAssemblies.Add(group.Framework, added.ToArray());
+				if (removed.Count > 0)
+					result.RemovedAssemblies.Add(group.Framework, removed.ToArray());
+				if (unchanged.Count > 0)
+					result.UnchangedAssemblies.Add(group.Framework, unchanged.ToArray());
 			}
 
-			string[] GetFrameworkAssemblies(NuGetFramework fw, IEnumerable<FrameworkSpecificGroup> items)
+			// add an extra layer of matching for any changes
+			if (!IgnoreSimilarFrameworks)
+			{
+				foreach (var addedFw in result.AddedFrameworks)
+				{
+					// try match the frameworks
+					//  - first the removed (may have been a rename or update)
+					//  - next the existing (may have been a second version)
+					var matchedFw =
+						TryMatchFramework(addedFw, result.RemovedFrameworks) ??
+						TryMatchFramework(addedFw, result.UnchangedFrameworks);
+
+					if (matchedFw != null)
+					{
+						var addedGroup = mergedGroup.FirstOrDefault(g => g.Framework == addedFw);
+						var matchGroup = mergedGroup.FirstOrDefault(g => g.Framework == matchedFw);
+
+						var matches = new List<(string, string)>();
+						foreach (var (path, name) in addedGroup.NewItems)
+						{
+							var match = matchGroup.OldItems.FirstOrDefault(i => i.name == name);
+							if (match.path != null)
+								matches.Add((path, match.path));
+						}
+						if (matches.Count > 0)
+						{
+							result.SimilarAssemblies.Add(addedFw, matches.ToArray());
+							result.SimilarFrameworks.Add(addedFw, matchedFw);
+						}
+					}
+				}
+			}
+
+			return result;
+
+			NuGetFramework TryMatchFramework(NuGetFramework added, NuGetFramework[] choices)
+			{
+				// there may be a case where the spelling has changed
+				var exact = choices.FirstOrDefault(fw => fw == added);
+				if (exact != null)
+					return exact;
+
+				// match frameworks that have just changed version
+				var name = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, added));
+				if (name != null)
+					return name;
+
+				// .NET Standard may have been an upgrade from PCL
+				var netstd = new NuGetFramework(".NETStandard");
+				var pcl = new NuGetFramework(".NETPortable");
+				if (NuGetFramework.FrameworkNameComparer.Equals(added, netstd))
+				{
+					var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, pcl));
+					if (pclnetstd != null)
+						return pclnetstd;
+				}
+				// the horror that a .NET Standard was devolved into a PCL
+				if (NuGetFramework.FrameworkNameComparer.Equals(added, pcl))
+				{
+					var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, netstd));
+					if (pclnetstd != null)
+						return pclnetstd;
+				}
+
+				return null;
+			}
+
+			(string path, string name)[] GetFrameworkAssemblies(NuGetFramework fw, IEnumerable<FrameworkSpecificGroup> items)
 			{
 				return items
 					?.FirstOrDefault(i => i.TargetFramework == fw)
 					?.Items
 					?.Where(i => Path.GetExtension(i).ToLowerInvariant() == ".dll")
+					?.Select(i => (i, GetOutputFilenameBase(i, false)))
 					?.ToArray()
-					?? new string[0];
+					?? Array.Empty<(string, string)>();
 			}
 		}
 
@@ -314,17 +407,12 @@ namespace Mono.ApiTools
 			var totalExtra = 0;
 			var totalWarning = 0;
 
-			var unchanged = packageDiff.GetAllUnchangedAssemblies();
-			var added = packageDiff.GetAllAddedAssemblies();
-			var assemblies = IgnoreAddedAssemblies ? unchanged : unchanged.Union(added);
-
-			foreach (var assembly in assemblies)
+			foreach (var (assembly, oldAssembly) in packageDiff.GetAllFrameworks().SelectMany(GetAllAssemblies))
 			{
-				var baseName = Path.Combine(outputDirectory, GetOutputFilenameBase(assembly));
-				var isNew = added.Contains(assembly);
+				var baseName = Path.Combine(outputDirectory, GetOutputFilenameBase(assembly, true));
 
 				// load the assembly info and generate the diff
-				using (var oldInfo = isNew ? CreateEmptyApiInfo(assembly) : await GenerateAssemblyApiInfoAsync(oldReader, assembly, cancellationToken).ConfigureAwait(false))
+				using (var oldInfo = oldAssembly == null ? CreateEmptyApiInfo(assembly) : await GenerateAssemblyApiInfoAsync(oldReader, oldAssembly, cancellationToken).ConfigureAwait(false))
 				using (var newInfo = await GenerateAssemblyApiInfoAsync(newReader, assembly, cancellationToken).ConfigureAwait(false))
 				using (var xmlDiff = await GenerateAssemblyXmlDiffAsync(oldInfo, newInfo, cancellationToken).ConfigureAwait(false))
 				{
@@ -348,7 +436,8 @@ namespace Mono.ApiTools
 
 					// copy the assembly changes to the package diff
 					var xPackageAssembly = xPackageDiff.Root.Descendants("assembly").FirstOrDefault(a => a.Attribute("path")?.Value == assembly);
-					xPackageAssembly.Add(xpresent, xok, xcomplete, xmissing, xextras, xwarnings);
+					// xPackageAssembly will be null if we are ignoring new assemblies and this is a new assembly
+					xPackageAssembly?.Add(xpresent, xok, xcomplete, xmissing, xextras, xwarnings);
 					totalMissing += int.Parse(xmissing?.Value ?? "0");
 					totalExtra += int.Parse(xextras?.Value ?? "0");
 					totalWarning += int.Parse(xwarnings?.Value ?? "0");
@@ -413,6 +502,28 @@ namespace Mono.ApiTools
 				Directory.CreateDirectory(outputDirectory);
 			var diffPath = Path.Combine(outputDirectory, $"{(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}.nupkg.diff.xml");
 			xPackageDiff.Save(diffPath);
+
+			IEnumerable<(string newA, string oldA)> GetAllAssemblies(NuGetFramework framework)
+			{
+				if (packageDiff.UnchangedAssemblies.TryGetValue(framework, out var unchangedAssemblies))
+				{
+					foreach (var a in unchangedAssemblies)
+						yield return a;
+				}
+
+				if (packageDiff.AddedAssemblies.TryGetValue(framework, out var addedAssemblies))
+				{
+					var matched = packageDiff.SimilarAssemblies.TryGetValue(framework, out var matchedAssemblies);
+
+					foreach (var a in addedAssemblies)
+					{
+						if (!IgnoreSimilarFrameworks && matched)
+							yield return (a, matchedAssemblies.FirstOrDefault(m => m.newPath == a).oldPath);
+						else if (!IgnoreAddedAssemblies)
+							yield return (a, null);
+					}
+				}
+			}
 		}
 
 
@@ -635,12 +746,17 @@ namespace Mono.ApiTools
 
 			XElement CreateAssemblies(NuGetFramework framework)
 			{
-				var assemblies = new List<string>();
+				var assemblies = new List<(string newPath, string oldPath)>();
 
+				// add the unchanged assemblies
 				if (diff.UnchangedAssemblies.TryGetValue(framework, out var unchanged))
 					assemblies.AddRange(unchanged);
-				if (!IgnoreAddedAssemblies && diff.AddedAssemblies.TryGetValue(framework, out var added))
-					assemblies.AddRange(added);
+
+				// add the new assemblies
+				if (!IgnoreSimilarFrameworks && diff.SimilarAssemblies.TryGetValue(framework, out var matched))
+					assemblies.AddRange(matched);
+				else if (!IgnoreAddedAssemblies && diff.AddedAssemblies.TryGetValue(framework, out var added))
+					assemblies.AddRange(added.Select(a => (a, a)));
 
 				if (assemblies.Count == 0)
 					return null;
@@ -648,9 +764,10 @@ namespace Mono.ApiTools
 				return
 					new XElement("assemblies", assemblies.Select(ass =>
 						new XElement("assembly",
-							new XAttribute("name", Path.GetFileNameWithoutExtension(ass)),
-							new XAttribute("path", ass),
-							CreateAssemblyPresence(ass))
+							new XAttribute("name", Path.GetFileNameWithoutExtension(ass.newPath)),
+							new XAttribute("path", ass.newPath),
+							ass.oldPath != ass.newPath ? new XAttribute("old_path", ass.oldPath) : null,
+							CreateAssemblyPresence(ass.newPath))
 						)
 					);
 			}
@@ -765,7 +882,7 @@ namespace Mono.ApiTools
 			});
 		}
 
-		private string GetOutputFilenameBase(string assembly)
+		private string GetOutputFilenameBase(string assembly, bool includePlatform)
 		{
 			assembly = assembly ?? string.Empty;
 			var parts = assembly.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
@@ -781,7 +898,8 @@ namespace Mono.ApiTools
 			// '/lib/assembly.dll'
 			// '/lib/<platform>/assembly.dll'
 			// '/lib/<platform>/folder/assembly.dll'
-			return string.Join(Path.DirectorySeparatorChar.ToString(), parts.Skip(1));
+			var skip = parts.Length == 2 || includePlatform ? 1 : 2;
+			return string.Join(Path.DirectorySeparatorChar.ToString(), parts.Skip(skip));
 		}
 
 		private string GetPackageDirectoryBase(PackageIdentity ident)
@@ -805,9 +923,9 @@ namespace Mono.ApiTools
 		{
 			public NuGetFramework Framework { get; set; }
 
-			public string[] OldItems { get; set; }
+			public (string path, string name)[] OldItems { get; set; }
 
-			public string[] NewItems { get; set; }
+			public (string path, string name)[] NewItems { get; set; }
 		}
 	}
 }

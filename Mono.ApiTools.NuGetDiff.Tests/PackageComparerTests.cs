@@ -1,4 +1,5 @@
 using Mono.Cecil;
+using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Versioning;
 using System;
@@ -12,6 +13,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Xunit;
 
 namespace Mono.ApiTools.Tests
@@ -33,8 +35,11 @@ namespace Mono.ApiTools.Tests
 		private const string FormsV3Url2 = "https://www.nuget.org/api/v2/package/Xamarin.Forms/3.0.0.561731";
 
 		private const string SkiaPackageId = "SkiaSharp";
-		private const string SkiaV600Number1 = "1.60.0";
-		private const string SkiaV602Number1 = "1.60.2";
+		private const string SkiaV560Number = "1.56.0";
+		private const string SkiaV561Number = "1.56.1";
+		private const string SkiaV600Number = "1.60.0";
+		private const string SkiaV601Number = "1.60.1";
+		private const string SkiaV602Number = "1.60.2";
 
 		private static readonly string[] searchPaths;
 
@@ -191,6 +196,17 @@ namespace Mono.ApiTools.Tests
 		}
 
 		[Fact]
+		public async Task TestCompletePackageDiffIsGeneratedCorrectlyWithAddedAssembliesButWithoutAllReferences()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.IgnoreResolutionErrors = true;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, diffDir);
+		}
+
+		[Fact]
 		public async Task TestCompletePackageDiffIsGeneratedCorrectlyWithoutAllReferences()
 		{
 			var diffDir = GenerateTestOutputPath();
@@ -220,9 +236,253 @@ namespace Mono.ApiTools.Tests
 			var diffDir = GenerateTestOutputPath();
 
 			var comparer = new NuGetDiff();
+			comparer.SaveAssemblyMarkdownDiff = true;
 			comparer.SearchPaths.AddRange(searchPaths);
 
-			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number1, SkiaV602Number1, diffDir);
+			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number, SkiaV602Number, diffDir);
+		}
+
+		[Fact]
+		public async Task TestMatchSameFrameworkButDifferentVersionFailsWhenSimilarIsDisabled()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveAssemblyMarkdownDiff = true;
+			comparer.IgnoreSimilarFrameworks = true;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number, SkiaV601Number, diffDir);
+
+			var xnupkg = XDocument.Load(Path.Combine(diffDir, "SkiaSharp.nupkg.diff.xml"));
+			var xFws = xnupkg.Root
+				.Element("package")
+				.Element("frameworks")
+				.Elements("framework");
+
+			var xMacFws = xFws.Where(f => f.Attribute("name").Value == "Xamarin.Mac").ToArray();
+			Assert.Equal(2, xMacFws.Length);
+
+			var xMac0Fw = xMacFws.Single(f => f.Attribute("version").Value == "0.0.0.0");
+			Assert.Equal("missing", xMac0Fw.Attribute("presence").Value);
+			Assert.Empty(xMac0Fw.Descendants());
+
+			var xMac2Fw = xMacFws.Single(f => f.Attribute("version").Value == "2.0.0.0");
+			Assert.Equal("extra", xMac2Fw.Attribute("presence").Value);
+
+			var xMac2Ass = xMac2Fw.Element("assemblies").Element("assembly");
+			Assert.Equal("lib/Xamarin.Mac20/SkiaSharp.dll", xMac2Ass.Attribute("path").Value);
+			Assert.Null(xMac2Ass.Attribute("old_path"));
+
+			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
+			var mac2File = File.ReadAllText(Path.Combine(diffDir, "Xamarin.Mac20", "SkiaSharp.dll.diff.md"));
+			Assert.NotEqual(netStdFile, mac2File);
+			Assert.True(netStdFile.Length < mac2File.Length);
+		}
+
+		[Fact]
+		public async Task TestMatchSameFrameworkButDifferentVersionWhenSimilarIsEnabled()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveAssemblyMarkdownDiff = true;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number, SkiaV601Number, diffDir);
+
+			var xnupkg = XDocument.Load(Path.Combine(diffDir, "SkiaSharp.nupkg.diff.xml"));
+			var xFws = xnupkg.Root
+				.Element("package")
+				.Element("frameworks")
+				.Elements("framework");
+
+			var xMacFws = xFws.Where(f => f.Attribute("name").Value == "Xamarin.Mac").ToArray();
+			Assert.Equal(2, xMacFws.Length);
+
+			var xMac0Fw = xMacFws.Single(f => f.Attribute("version").Value == "0.0.0.0");
+			Assert.Equal("missing", xMac0Fw.Attribute("presence").Value);
+			Assert.Empty(xMac0Fw.Descendants());
+
+			var xMac2Fw = xMacFws.Single(f => f.Attribute("version").Value == "2.0.0.0");
+			Assert.Equal("extra", xMac2Fw.Attribute("presence").Value);
+
+			var xMac2Ass = xMac2Fw.Element("assemblies").Element("assembly");
+			Assert.Equal("lib/Xamarin.Mac20/SkiaSharp.dll", xMac2Ass.Attribute("path").Value);
+			Assert.Equal("lib/XamarinMac/SkiaSharp.dll", xMac2Ass.Attribute("old_path").Value);
+
+			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
+			var mac2File = File.ReadAllText(Path.Combine(diffDir, "Xamarin.Mac20", "SkiaSharp.dll.diff.md"));
+			Assert.Equal(netStdFile, mac2File);
+		}
+
+		[Fact]
+		public async Task TestMatchSameFrameworkAndVersionButDifferentSpelling()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveAssemblyMarkdownDiff = true;
+			comparer.IgnoreSimilarFrameworks = true;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV600Number, SkiaV601Number, diffDir);
+
+			var xnupkg = XDocument.Load(Path.Combine(diffDir, "SkiaSharp.nupkg.diff.xml"));
+			var xFws = xnupkg.Root
+				.Element("package")
+				.Element("frameworks")
+				.Elements("framework");
+
+			var xIosFws = xFws.Single(f => f.Attribute("name").Value == "Xamarin.iOS");
+			Assert.Null(xIosFws.Attribute("presence"));
+			var xIosAss = xIosFws.Element("assemblies").Element("assembly");
+			Assert.Equal("lib/Xamarin.iOS/SkiaSharp.dll", xIosAss.Attribute("path").Value);
+			Assert.Equal("lib/XamariniOS/SkiaSharp.dll", xIosAss.Attribute("old_path").Value);
+			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
+			var iosFile = File.ReadAllText(Path.Combine(diffDir, "Xamarin.iOS", "SkiaSharp.dll.diff.md"));
+			Assert.Equal(netStdFile, iosFile);
+		}
+
+		[Fact]
+		public async Task TestCompleteMatchNetStandardPortableReusePortable()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveAssemblyMarkdownDiff = true;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV560Number, SkiaV600Number, diffDir);
+
+			var xnupkg = XDocument.Load(Path.Combine(diffDir, "SkiaSharp.nupkg.diff.xml"));
+			var xFws = xnupkg.Root
+				.Element("package")
+				.Element("frameworks")
+				.Elements("framework");
+
+			var xPclFw = xFws.Single(f => f.Attribute("name").Value == ".NETPortable");
+			Assert.Null(xPclFw.Attribute("presence"));
+
+			var xStdFw = xFws.Single(f => f.Attribute("name").Value == ".NETStandard");
+			var xStdAss = xStdFw.Element("assemblies").Element("assembly");
+			Assert.Equal("lib/netstandard1.3/SkiaSharp.dll", xStdAss.Attribute("path").Value);
+			Assert.Equal("lib/portable-net45+win8+wpa81+wp8/SkiaSharp.dll", xStdAss.Attribute("old_path").Value);
+			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
+			var netFile = File.ReadAllText(Path.Combine(diffDir, "portable-net45+win8+wpa81+wp8", "SkiaSharp.dll.diff.md"));
+			Assert.Equal(netStdFile, netFile);
+		}
+
+		[Fact]
+		public async Task TestMatchPortableUpgradeToNetStandard()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveAssemblyMarkdownDiff = true;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(SkiaPackageId, SkiaV560Number, SkiaV601Number, diffDir);
+
+			var xnupkg = XDocument.Load(Path.Combine(diffDir, "SkiaSharp.nupkg.diff.xml"));
+			var xFws = xnupkg.Root
+				.Element("package")
+				.Element("frameworks")
+				.Elements("framework");
+
+			var xPclFw = xFws.Single(f => f.Attribute("name").Value == ".NETPortable");
+			Assert.Equal("missing", xPclFw.Attribute("presence").Value);
+			Assert.Empty(xPclFw.Descendants());
+
+			var xStdFw = xFws.Single(f => f.Attribute("name").Value == ".NETStandard");
+			var xStdAss = xStdFw.Element("assemblies").Element("assembly");
+			Assert.Equal("lib/netstandard1.3/SkiaSharp.dll", xStdAss.Attribute("path").Value);
+			Assert.Equal("lib/portable-net45+win8+wpa81+wp8/SkiaSharp.dll", xStdAss.Attribute("old_path").Value);
+			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
+			var netFile = File.ReadAllText(Path.Combine(diffDir, "net45", "SkiaSharp.dll.diff.md"));
+			Assert.Equal(netStdFile, netFile);
+		}
+
+		[Fact]
+		public async Task TestMatchFramework()
+		{
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+
+			var diff = await comparer.GenerateAsync(SkiaPackageId, SkiaV600Number, SkiaV601Number);
+
+			Assert.Equal(2, diff.AddedFrameworks.Length);
+			Assert.Equal(2, diff.RemovedFrameworks.Length);
+			Assert.Equal(7, diff.UnchangedFrameworks.Length);
+			Assert.Single(diff.SimilarFrameworks);
+
+			var mac2 = NuGetFramework.Parse("Xamarin.Mac,Version=v2.0");
+			var mac0 = NuGetFramework.Parse("Xamarin.Mac,Version=v0.0");
+			Assert.Contains(mac2, diff.SimilarFrameworks.Keys);
+			Assert.Equal(mac0, diff.SimilarFrameworks[mac2]);
+
+			const string mac2Dll = "lib/Xamarin.Mac20/SkiaSharp.dll";
+			const string mac0Dll = "lib/XamarinMac/SkiaSharp.dll";
+			Assert.Contains(mac2, diff.SimilarAssemblies.Keys);
+			Assert.Contains((mac2Dll, mac0Dll), diff.SimilarAssemblies[mac2]);
+		}
+
+		[Fact]
+		public async Task TestMatchNetStandardPortableReusePortable()
+		{
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+
+			var diff = await comparer.GenerateAsync(SkiaPackageId, SkiaV560Number, SkiaV600Number);
+
+			Assert.Equal(2, diff.AddedFrameworks.Length);
+			Assert.Empty(diff.RemovedFrameworks);
+			Assert.Equal(7, diff.UnchangedFrameworks.Length);
+			Assert.Single(diff.SimilarFrameworks);
+
+			var netstd = NuGetFramework.Parse(".NETStandard,Version=v1.3");
+			var pcl = NuGetFramework.Parse(".NETPortable,Version=v0.0,Profile=Profile259");
+			Assert.Contains(netstd, diff.SimilarFrameworks.Keys);
+			Assert.Equal(pcl, diff.SimilarFrameworks[netstd]);
+
+			const string netstdDll = "lib/netstandard1.3/SkiaSharp.dll";
+			const string pclDll = "lib/portable-net45+win8+wpa81+wp8/SkiaSharp.dll";
+			Assert.Contains(netstd, diff.SimilarAssemblies.Keys);
+			Assert.Contains((netstdDll, pclDll), diff.SimilarAssemblies[netstd]);
+		}
+
+		[Fact]
+		public async Task TestMatchNetStandardPortable()
+		{
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+
+			var diff = await comparer.GenerateAsync(SkiaPackageId, SkiaV560Number, SkiaV601Number);
+
+			Assert.Equal(4, diff.AddedFrameworks.Length);
+			Assert.Equal(2, diff.RemovedFrameworks.Length);
+			Assert.Equal(5, diff.UnchangedFrameworks.Length);
+			Assert.Equal(2, diff.SimilarFrameworks.Count);
+
+			var mac2 = NuGetFramework.Parse("Xamarin.Mac,Version=v2.0");
+			var mac0 = NuGetFramework.Parse("Xamarin.Mac,Version=v0.0");
+			Assert.Contains(mac2, diff.SimilarFrameworks.Keys);
+			Assert.Equal(mac0, diff.SimilarFrameworks[mac2]);
+
+			var netstd = NuGetFramework.Parse(".NETStandard,Version=v1.3");
+			var pcl = NuGetFramework.Parse(".NETPortable,Version=v0.0,Profile=Profile259");
+			Assert.Contains(netstd, diff.SimilarFrameworks.Keys);
+			Assert.Equal(pcl, diff.SimilarFrameworks[netstd]);
+
+			const string mac2Dll = "lib/Xamarin.Mac20/SkiaSharp.dll";
+			const string mac0Dll = "lib/XamarinMac/SkiaSharp.dll";
+			Assert.Contains(mac2, diff.SimilarAssemblies.Keys);
+			Assert.Contains((mac2Dll, mac0Dll), diff.SimilarAssemblies[mac2]);
+
+			const string netstdDll = "lib/netstandard1.3/SkiaSharp.dll";
+			const string pclDll = "lib/portable-net45+win8+wpa81+wp8/SkiaSharp.dll";
+			Assert.Contains(netstd, diff.SimilarAssemblies.Keys);
+			Assert.Contains((netstdDll, pclDll), diff.SimilarAssemblies[netstd]);
 		}
 
 		[Fact]
@@ -233,6 +493,7 @@ namespace Mono.ApiTools.Tests
 			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(searchPaths);
 			comparer.SaveAssemblyMarkdownDiff = true;
+			comparer.IgnoreSimilarFrameworks = true;
 
 			// download extra dependencies
 			await AddDependencyAsync(comparer, "Xamarin.Android.Support.v7.AppCompat", "25.4.0.2", "MonoAndroid70");
@@ -287,6 +548,7 @@ namespace Mono.ApiTools.Tests
 			missing.IgnoreInheritedInterfaces = true;
 			missing.SaveAssemblyMarkdownDiff = true;
 			missing.IgnoreAddedAssemblies = true;
+			missing.IgnoreSimilarFrameworks = true;
 			await missing.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, missingDir);
 
 			// generate diff with everything
@@ -295,6 +557,7 @@ namespace Mono.ApiTools.Tests
 			all.IgnoreInheritedInterfaces = true;
 			all.SaveAssemblyMarkdownDiff = true;
 			all.IgnoreAddedAssemblies = true;
+			all.IgnoreSimilarFrameworks = true;
 			await AddDependencyAsync(all, "Xamarin.Android.Support.v7.AppCompat", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Fragment", "25.4.0.2", "MonoAndroid70");
 			await AddDependencyAsync(all, "Xamarin.Android.Support.Core.Utils", "25.4.0.2", "MonoAndroid70");
