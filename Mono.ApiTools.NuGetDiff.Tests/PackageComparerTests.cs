@@ -219,6 +219,24 @@ namespace Mono.ApiTools.Tests
 		}
 
 		[Fact]
+		public async Task TestCompletePackageDiffIsGeneratedCorrectlyWithoutAllReferencesAndIgnoreNonBreaking()
+		{
+			var breakingDir = GenerateTestOutputPath();
+			var ignoreBreakingDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.IgnoreResolutionErrors = true;
+			comparer.IgnoreAddedAssemblies = true;
+			comparer.SaveAssemblyMarkdownDiff = true;
+
+			comparer.IgnoreNonBreakingChanges = false;
+			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, breakingDir);
+
+			comparer.IgnoreNonBreakingChanges = true;
+			await comparer.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, ignoreBreakingDir);
+		}
+
+		[Fact]
 		public async Task TestCompletePackageDiffThrowsWithoutAllReferencesAndFlag()
 		{
 			var diffDir = GenerateTestOutputPath();

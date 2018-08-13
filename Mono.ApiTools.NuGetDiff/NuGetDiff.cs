@@ -23,6 +23,11 @@ namespace Mono.ApiTools
 		private const int DefaultCopyBufferSize = 81920;
 		private static readonly Encoding UTF8NoBOM = new UTF8Encoding(false, true);
 
+		private const string DefaultXmlDiffFileExtension = ".diff.xml";
+		private const string DefaultHtmlDiffFileExtension = ".diff.html";
+		private const string DefaultMarkdownDiffFileExtension = ".diff.md";
+		private const string DefaultApiInfoFileExtension = ".info.xml";
+
 		private static readonly SourceRepository source;
 		private static readonly SourceCacheContext cache;
 		private static readonly ILogger logger;
@@ -49,6 +54,8 @@ namespace Mono.ApiTools
 
 		public bool IgnoreSimilarFrameworks { get; set; } = false;
 
+		public bool IgnoreNonBreakingChanges { get; set; } = false;
+
 		public bool SaveAssemblyApiInfo { get; set; } = false;
 
 		public bool SaveAssemblyHtmlDiff { get; set; } = false;
@@ -56,6 +63,14 @@ namespace Mono.ApiTools
 		public bool SaveAssemblyMarkdownDiff { get; set; } = false;
 
 		public bool SaveAssemblyXmlDiff { get; set; } = false;
+
+		public string ApiInfoFileExtension { get; set; } = DefaultApiInfoFileExtension;
+
+		public string HtmlDiffFileExtension { get; set; } = DefaultApiInfoFileExtension;
+
+		public string MarkdownDiffFileExtension { get; set; } = DefaultMarkdownDiffFileExtension;
+
+		public string XmlDiffFileExtension { get; set; } = DefaultXmlDiffFileExtension;
 
 
 		// GenerateAsync
@@ -446,7 +461,7 @@ namespace Mono.ApiTools
 					if (SaveAssemblyXmlDiff)
 					{
 						xmlDiff.Position = 0;
-						await SaveToFileAsync(xmlDiff, baseName + ".diff.xml", cancellationToken).ConfigureAwait(false);
+						await SaveToFileAsync(xmlDiff, baseName + GetExt(XmlDiffFileExtension, DefaultXmlDiffFileExtension), cancellationToken).ConfigureAwait(false);
 					}
 
 					// save the html diff
@@ -458,7 +473,7 @@ namespace Mono.ApiTools
 						{
 							if (htmlDiff.Length > 0)
 							{
-								await SaveToFileAsync(htmlDiff, baseName + ".diff.html", cancellationToken).ConfigureAwait(false);
+								await SaveToFileAsync(htmlDiff, baseName + GetExt(HtmlDiffFileExtension, DefaultHtmlDiffFileExtension), cancellationToken).ConfigureAwait(false);
 							}
 						}
 					}
@@ -472,7 +487,7 @@ namespace Mono.ApiTools
 						{
 							if (mdDiff.Length > 0)
 							{
-								await SaveToFileAsync(mdDiff, baseName + ".diff.md", cancellationToken).ConfigureAwait(false);
+								await SaveToFileAsync(mdDiff, baseName + GetExt(MarkdownDiffFileExtension, DefaultMarkdownDiffFileExtension), cancellationToken).ConfigureAwait(false);
 							}
 						}
 					}
@@ -482,8 +497,8 @@ namespace Mono.ApiTools
 					{
 						oldInfo.Position = 0;
 						newInfo.Position = 0;
-						await SaveToFileAsync(oldInfo, baseName + ".old.info.xml", cancellationToken).ConfigureAwait(false);
-						await SaveToFileAsync(newInfo, baseName + ".new.info.xml", cancellationToken).ConfigureAwait(false);
+						await SaveToFileAsync(oldInfo, baseName + ".old" + GetExt(ApiInfoFileExtension, DefaultApiInfoFileExtension), cancellationToken).ConfigureAwait(false);
+						await SaveToFileAsync(newInfo, baseName + ".new" + GetExt(ApiInfoFileExtension, DefaultApiInfoFileExtension), cancellationToken).ConfigureAwait(false);
 					}
 				}
 			}
@@ -689,6 +704,15 @@ namespace Mono.ApiTools
 
 		// Private members
 
+		private static string GetExt(string extension, string fallback)
+		{
+			if (string.IsNullOrWhiteSpace(extension))
+				return fallback;
+			if (extension.StartsWith("."))
+				return extension;
+			return "." + extension;
+		}
+
 		private Stream CreateEmptyApiInfo(string assemblyPath)
 		{
 			var xdoc = new XDocument(new XElement("assemblies",
@@ -715,6 +739,16 @@ namespace Mono.ApiTools
 				config.SearchDirectories.AddRange(SearchPaths);
 			config.IgnoreResolutionErrors = IgnoreResolutionErrors;
 			config.IgnoreInheritedInterfaces = IgnoreInheritedInterfaces;
+
+			return config;
+		}
+
+		private ApiDiffFormattedConfig CreateApiDiffFormattedConfig(ApiDiffFormatter formatter)
+		{
+			var config = new ApiDiffFormattedConfig();
+
+			config.Formatter = formatter;
+			config.IgnoreNonbreaking = IgnoreNonBreakingChanges;
 
 			return config;
 		}
@@ -858,7 +892,7 @@ namespace Mono.ApiTools
 
 				using (var writer = new StreamWriter(info, UTF8NoBOM, DefaultSaveBufferSize, true))
 				{
-					ApiDiffFormatted.Generate(oldInfo, newInfo, writer, new ApiDiffFormattedConfig { Formatter = ApiDiffFormatter.Html });
+					ApiDiffFormatted.Generate(oldInfo, newInfo, writer, CreateApiDiffFormattedConfig(ApiDiffFormatter.Html));
 				}
 
 				info.Position = 0;
@@ -874,7 +908,7 @@ namespace Mono.ApiTools
 
 				using (var writer = new StreamWriter(info, UTF8NoBOM, DefaultSaveBufferSize, true))
 				{
-					ApiDiffFormatted.Generate(oldInfo, newInfo, writer, new ApiDiffFormattedConfig { Formatter = ApiDiffFormatter.Markdown });
+					ApiDiffFormatted.Generate(oldInfo, newInfo, writer, CreateApiDiffFormattedConfig(ApiDiffFormatter.Markdown));
 				}
 
 				info.Position = 0;
