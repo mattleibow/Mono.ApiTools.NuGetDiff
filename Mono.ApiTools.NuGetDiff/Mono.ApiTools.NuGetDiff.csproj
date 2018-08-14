@@ -2,7 +2,27 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Mono.ApiTools.NuGetDiff</AssemblyName>
+    <RootNamespace>Mono.ApiTools</RootNamespace>
     <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Mono.ApiTools.NuGetDiff</PackageId>
+    <Title>Mono.ApiTools.NuGetDiff</Title>
+    <!-- <PackageIconUrl>TODO</PackageIconUrl> -->
+    <Summary>A library to help with .NET API development and and NuGet diff-ing.</Summary>
+    <Description>A library to help with .NET API development and and NuGet diff-ing.</Description>
+    <PackageTags>nuget, diff, compare, mono, mono-api-tools, mono-api-info, mono-api-diff, mono-api-html</PackageTags>
+    <Authors>Matthew Leibowitz</Authors>
+    <Owners>Matthew Leibowitz</Owners>
+    <Copyright>© Matthew Leibowitz.</Copyright>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <RepositoryUrl>https://github.com/mattleibow/NuGetComparer</RepositoryUrl>
+    <PackageLicenseUrl>https://github.com/mattleibow/NuGetComparer/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/mattleibow/NuGetComparer</PackageProjectUrl>
+    <PackageReleaseNotes>See: https://github.com/mattleibow/NuGetComparer/releases/v$(PackageVersion)</PackageReleaseNotes>
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
