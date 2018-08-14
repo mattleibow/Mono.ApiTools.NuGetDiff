@@ -3,30 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-
-    <!-- TEMP WORKAROUND UNTIL MONO PR IS MERGED -->
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGet.Packaging" Version="4.7.0" />
     <PackageReference Include="NuGet.Protocol" Version="4.7.0" />
-
-    <!-- TEMP WORKAROUND UNTIL MONO PR IS MERGED -->
-    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="Mono.ApiTools" Version="5.14.0.1" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiffFormatted\Mono.ApiTools.ApiDiffFormatted.csproj" PrivateAssets="All" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiff\Mono.ApiTools.ApiDiff.csproj" PrivateAssets="All" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj" PrivateAssets="All" />
-  </ItemGroup>
-
-  <!-- TEMP WORKAROUND UNTIL MONO PR IS MERGED -->
-  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
-    <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('PrivateAssets', 'All'))" />
-    </ItemGroup>
-  </Target>
 
 </Project>
