@@ -18,10 +18,10 @@
     <Owners>Matthew Leibowitz</Owners>
     <Copyright>© Matthew Leibowitz.</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <RepositoryUrl>https://github.com/mattleibow/NuGetComparer</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/mattleibow/NuGetComparer/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/mattleibow/NuGetComparer</PackageProjectUrl>
-    <PackageReleaseNotes>See: https://github.com/mattleibow/NuGetComparer/releases/v$(PackageVersion)</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/mattleibow/Mono.ApiTools.NuGetDiff</RepositoryUrl>
+    <PackageLicenseUrl>https://github.com/mattleibow/Mono.ApiTools.NuGetDiff/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/mattleibow/Mono.ApiTools.NuGetDiff</PackageProjectUrl>
+    <PackageReleaseNotes>See: https://github.com/mattleibow/Mono.ApiTools.NuGetDiff/releases/v$(PackageVersion)</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
