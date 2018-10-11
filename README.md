@@ -1,6 +1,6 @@
 # NuGetDiff
 
-[![Build status](https://ci.appveyor.com/api/projects/status/y8yct1q94vxaw3i6/branch/master?svg=true)](https://ci.appveyor.com/project/mattleibow/nugetcomparer/branch/master) [![NuGet Pre Release](https://img.shields.io/nuget/vpre/Mono.ApiTools.NuGetDiff.svg)](https://www.nuget.org/packages/Mono.ApiTools.NuGetDiff)
+[![Build status](https://dotnetdevaddict.visualstudio.com/Mono.ApiTools.NuGetDiff/_apis/build/status/Build%20Mono.ApiTools.NuGetDiff)](https://dotnetdevaddict.visualstudio.com/Mono.ApiTools.NuGetDiff/_build/latest?definitionId=12) [![Build status](https://ci.appveyor.com/api/projects/status/y8yct1q94vxaw3i6/branch/master?svg=true)](https://ci.appveyor.com/project/mattleibow/nugetcomparer/branch/master) [![NuGet Pre Release](https://img.shields.io/nuget/vpre/Mono.ApiTools.NuGetDiff.svg)](https://www.nuget.org/packages/Mono.ApiTools.NuGetDiff)
 
 A library to help with .NET API development and and NuGet diff-ing.
 
@@ -65,7 +65,7 @@ improvements can be made:
 
  * Add XML docs for Intellisense
  * Expose more configuration points for generating API info or diffs
- * More...
+ * More things...
 
 [nuget]: https://github.com/NuGet/NuGet.Client
 [api-tools]: https://www.nuget.org/packages/Mono.ApiTools
