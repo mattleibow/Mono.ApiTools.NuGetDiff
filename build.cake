@@ -56,7 +56,7 @@ Task("Test")
     .Does(() =>
 {
     Information("Running tests...");
-    DotNetCoreTool("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", "xunit", "-verbose");
+    DotNetCoreTest("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj");
 });
 
 Task("Default")
