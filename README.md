@@ -65,7 +65,7 @@ improvements can be made:
 
  * Add XML docs for Intellisense
  * Expose more configuration points for generating API info or diffs
- * More...
+ * More things...
 
 [nuget]: https://github.com/NuGet/NuGet.Client
 [api-tools]: https://www.nuget.org/packages/Mono.ApiTools
