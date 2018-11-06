@@ -66,7 +66,7 @@ namespace Mono.ApiTools
 
 		public string ApiInfoFileExtension { get; set; } = DefaultApiInfoFileExtension;
 
-		public string HtmlDiffFileExtension { get; set; } = DefaultApiInfoFileExtension;
+		public string HtmlDiffFileExtension { get; set; } = DefaultHtmlDiffFileExtension;
 
 		public string MarkdownDiffFileExtension { get; set; } = DefaultMarkdownDiffFileExtension;
 
