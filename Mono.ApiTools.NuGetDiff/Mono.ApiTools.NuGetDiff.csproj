@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <AssemblyName>Mono.ApiTools.NuGetDiff</AssemblyName>
     <RootNamespace>Mono.ApiTools</RootNamespace>
     <LangVersion>latest</LangVersion>
@@ -25,8 +25,11 @@
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NuGet.Packaging" Version="4.7.0" />
     <PackageReference Include="NuGet.Protocol" Version="4.7.0" />
     <PackageReference Include="Mono.ApiTools" Version="5.14.0.2" />
