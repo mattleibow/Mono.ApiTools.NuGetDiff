@@ -41,6 +41,10 @@ namespace Mono.ApiTools.Tests
 		private const string SkiaV601Number = "1.60.1";
 		private const string SkiaV602Number = "1.60.2";
 
+		private const string AndroidSupportPackageId = "Xamarin.Android.Support.Compat";
+		private const string AndroidSupportV28Number = "28.0.0-preview5";
+		private const string AndroidSupportV27Number = "27.0.2.1";
+
 		private static readonly string[] searchPaths;
 
 		static PackageComparerTests()
@@ -443,6 +447,21 @@ namespace Mono.ApiTools.Tests
 			const string mac0Dll = "lib/XamarinMac/SkiaSharp.dll";
 			Assert.Contains(mac2, diff.SimilarAssemblies.Keys);
 			Assert.Contains((mac2Dll, mac0Dll), diff.SimilarAssemblies[mac2]);
+		}
+
+		[Fact]
+		public async Task TestMatchFrameworksWithAllFrameworks()
+		{
+			var diffDir = GenerateTestOutputPath();
+
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.IgnoreResolutionErrors = true;
+			comparer.SaveAssemblyApiInfo = true;
+			comparer.SaveAssemblyXmlDiff = true;
+			comparer.SaveAssemblyMarkdownDiff = true;
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(AndroidSupportPackageId, AndroidSupportV27Number, AndroidSupportV28Number, diffDir);
 		}
 
 		[Fact]

@@ -138,7 +138,9 @@ namespace Mono.ApiTools
 			var newItems = await newReader.GetLibItemsAsync(cancellationToken).ConfigureAwait(false);
 
 			// create a new collection for the updates
-			var mergedFrameworks = oldItems.Select(i => i.TargetFramework).Union(newItems.Select(i => i.TargetFramework));
+			var oldFrameworks = oldItems.Select(i => i.TargetFramework).Distinct().ToArray();
+			var newFrameworks = newItems.Select(i => i.TargetFramework).Distinct().ToArray();
+			var mergedFrameworks = oldFrameworks.Union(newFrameworks);
 			var mergedGroup = mergedFrameworks.Select(fw => new FrameworkGroup
 			{
 				Framework = fw,
@@ -153,8 +155,8 @@ namespace Mono.ApiTools
 				NewIdentity = newIdentity,
 
 				// frameworks
-				AddedFrameworks = mergedGroup.Where(g => !g.OldItems.Any()).Select(g => g.Framework).ToArray(),
-				RemovedFrameworks = mergedGroup.Where(g => !g.NewItems.Any()).Select(g => g.Framework).ToArray(),
+				AddedFrameworks = mergedGroup.Where(g => !g.OldItems.Any() && !oldFrameworks.Contains(g.Framework)).Select(g => g.Framework).ToArray(),
+				RemovedFrameworks = mergedGroup.Where(g => !g.NewItems.Any() && !newFrameworks.Contains(g.Framework)).Select(g => g.Framework).ToArray(),
 				UnchangedFrameworks = mergedGroup.Where(g => g.OldItems.Any() && g.NewItems.Any()).Select(g => g.Framework).ToArray(),
 				SimilarFrameworks = new Dictionary<NuGetFramework, NuGetFramework>(),
 
