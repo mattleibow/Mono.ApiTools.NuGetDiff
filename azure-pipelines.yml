@@ -6,7 +6,7 @@ variables:
   packageVersion: '1.0.2.{build}'
 
 steps:
-  - powershell: .\build.ps1 --packageversion=$(packageVersion) --configuration=$(configuration)
+  - powershell: .\build.ps1 -configuration="$(configuration)" -packageversion="$(packageVersion)"
   - task: PublishBuildArtifacts@1
     inputs:
       PathtoPublish: output
