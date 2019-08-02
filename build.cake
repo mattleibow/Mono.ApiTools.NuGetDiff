@@ -54,7 +54,9 @@ Task("Test")
     .Does(() =>
 {
     Information("Running tests...");
-    DotNetCoreTest("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj");
+    DotNetCoreTest("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", new DotNetCoreTestSettings {
+        Logger = "trx"
+    });
 });
 
 Task("Default")
