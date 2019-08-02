@@ -1,0 +1,13 @@
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  configuration: 'Release'
+  packageVersion: '1.0.2.{build}'
+
+steps:
+  - powershell: .\build.ps1 --packageversion=$(packageVersion) --configuration=$(configuration)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: output
+      ArtifactName: nuget
