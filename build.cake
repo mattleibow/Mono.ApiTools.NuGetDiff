@@ -1,4 +1,4 @@
-#tool "nuget:?package=xunit.runner.console&version=2.4.0"
+#tool nuget:?package=xunit.runner.console&version=2.4.1
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
