@@ -45,7 +45,7 @@ Task("Pack")
     MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
 
     // pre-release
-    settings.WithProperty("PackageVersion", packageVersion + "-preview-" + previewNumber);
+    settings.WithProperty("PackageVersion", packageVersion + "-preview." + previewNumber);
     MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
 });
 
