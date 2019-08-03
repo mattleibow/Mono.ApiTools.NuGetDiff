@@ -1,18 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <AssemblyName>Mono.ApiTools.NuGetDiff</AssemblyName>
-    <RootNamespace>Mono.ApiTools</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>netcoreapp2.2</TargetFrameworks>
     <LangVersion>latest</LangVersion>
+    <RootNamespace>Mono.ApiTools</RootNamespace>
+    <AssemblyName>api-tools</AssemblyName>
+    <ToolCommandName>api-tools</ToolCommandName>
+    <PackAsTool>true</PackAsTool>
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Mono.ApiTools.NuGetDiff</PackageId>
-    <Title>Mono.ApiTools.NuGetDiff</Title>
+    <PackageId>api-tools</PackageId>
+    <Title>api-tools</Title>
     <!-- <PackageIconUrl>TODO</PackageIconUrl> -->
-    <Summary>A library to help with .NET API development and and NuGet diff-ing.</Summary>
-    <Description>A library to help with .NET API development and and NuGet diff-ing.</Description>
+    <Summary>A set of tools to help with .NET API development and and NuGet diff-ing.</Summary>
+    <Description>A set of tools to help with .NET API development and and NuGet diff-ing.</Description>
     <PackageTags>nuget, diff, compare, mono, mono-api-tools, mono-api-info, mono-api-diff, mono-api-html</PackageTags>
     <Authors>Matthew Leibowitz</Authors>
     <Owners>Matthew Leibowitz</Owners>
@@ -25,14 +28,15 @@
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="NuGet.Packaging" Version="4.6.0" />
     <PackageReference Include="NuGet.Protocol" Version="4.6.0" />
     <PackageReference Include="Mono.ApiTools" Version="5.14.0.2" />
+    <PackageReference Include="Mono.Options" Version="5.3.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mono.ApiTools.NuGetDiff\Mono.ApiTools.NuGetDiff.csproj" />
   </ItemGroup>
 
 </Project>

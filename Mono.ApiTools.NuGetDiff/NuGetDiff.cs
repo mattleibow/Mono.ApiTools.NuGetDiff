@@ -639,7 +639,7 @@ namespace Mono.ApiTools
 			if (File.Exists(nupkg) && File.Exists(extractedFlag))
 				return dir;
 
-			await ExtractPackageToDirectoryAsync(identity, dir);
+			await ExtractPackageToDirectoryAsync(identity, dir, cancellationToken);
 
 			File.WriteAllText(extractedFlag, "");
 
@@ -845,6 +845,9 @@ namespace Mono.ApiTools
 			var metadataResource = await source.GetResourceAsync<PackageMetadataResource>();
 
 			var metadata = await metadataResource.GetMetadataAsync(identity, cache, logger, cancellationToken).ConfigureAwait(false);
+
+			if (metadata == null)
+				throw new ArgumentException($"Package identity is not valid: {identity}", nameof(identity));
 
 			var ident = metadata.Identity;
 

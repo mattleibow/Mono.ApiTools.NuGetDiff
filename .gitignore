@@ -5,6 +5,7 @@
 
 # Repository-specific files
 externals/
+test-output/
 
 # User-specific files
 *.suo

@@ -11,6 +11,7 @@ var assemblyVersion = $"{version.Major}.0.0.0";
 var fileVersion     = $"{version.Major}.{version.Minor}.{version.Build}.0";
 var infoVersion     = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
 var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
+var previewVersion = packageVersion + "-preview." + previewNumber;
 
 Task("Build")
     .Does(() =>
@@ -38,25 +39,33 @@ Task("Pack")
         .WithProperty("Version", assemblyVersion)
         .WithProperty("FileVersion", fileVersion)
         .WithProperty("InformationalVersion", infoVersion)
-        .WithProperty("PackageOutputPath", MakeAbsolute((DirectoryPath)"./output/").FullPath);
+        .WithProperty("PackageOutputPath", MakeAbsolute((DirectoryPath)"./output/").FullPath)
+        .WithTarget("Pack");
 
     // stable
-    settings = settings.WithTarget("Pack");
     MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+    MSBuild("api-tools/api-tools.csproj", settings);
 
     // pre-release
-    settings.WithProperty("PackageVersion", packageVersion + "-preview." + previewNumber);
+    settings.WithProperty("PackageVersion", previewVersion);
     MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+    MSBuild("api-tools/api-tools.csproj", settings);
 });
 
 Task("Test")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    Information("Running tests...");
+    Information("Running unit tests...");
     DotNetCoreTest("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", new DotNetCoreTestSettings {
         Logger = "trx"
     });
+
+    Information("Running app tests...");
+    var app = $"api-tools/bin/{configuration}/netcoreapp2.2/api-tools.dll";
+    var id = "Mono.ApiTools.NuGetDiff";
+    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{packageVersion}.nupkg --latest --cache=externals --output=test-output");
+    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{packageVersion}.nupkg ./output/{id}.{previewVersion}.nupkg --output=test-output");
 });
 
 Task("Default")
