@@ -1,5 +1,6 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
+var prerelease = bool.Parse (Argument("prerelease", EnvironmentVariable ("BUILD_PRERELEASE") ?? "true"));
 
 // a bit of logic to create the version number:
 //  - input                     = 1.2.3.4
@@ -35,21 +36,23 @@ Task("Pack")
         .SetConfiguration(configuration)
         .SetVerbosity(Verbosity.Minimal)
         .WithProperty("IncludeSymbols", "True")
-        .WithProperty("PackageVersion", packageVersion)
         .WithProperty("Version", assemblyVersion)
         .WithProperty("FileVersion", fileVersion)
         .WithProperty("InformationalVersion", infoVersion)
         .WithProperty("PackageOutputPath", MakeAbsolute((DirectoryPath)"./output/").FullPath)
         .WithTarget("Pack");
 
-    // stable
-    MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
-    MSBuild("api-tools/api-tools.csproj", settings);
+    if (prerelease) {
+        settings.WithProperty("PackageVersion", previewVersion);
 
-    // pre-release
-    settings.WithProperty("PackageVersion", previewVersion);
-    MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
-    MSBuild("api-tools/api-tools.csproj", settings);
+        MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+        MSBuild("api-tools/api-tools.csproj", settings);
+    } else {
+        settings.WithProperty("PackageVersion", packageVersion);
+
+        MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+        MSBuild("api-tools/api-tools.csproj", settings);
+    }
 });
 
 Task("Test")
@@ -65,7 +68,7 @@ Task("Test")
     var app = $"api-tools/bin/{configuration}/netcoreapp2.2/api-tools.dll";
     var id = "Mono.ApiTools.NuGetDiff";
     DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{packageVersion}.nupkg --latest --cache=externals --output=test-output");
-    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{previewVersion}.nupkg ./output/{id}.{packageVersion}.nupkg --output=test-output");
+    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{packageVersion}.nupkg ./output/{id}.{packageVersion}.nupkg --output=test-output");
 });
 
 Task("Default")
