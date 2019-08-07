@@ -952,7 +952,7 @@ namespace Mono.ApiTools
 			if (!Directory.Exists(directory))
 				Directory.CreateDirectory(directory);
 
-			using (var file = File.OpenWrite(path))
+			using (var file = File.Create(path))
 			{
 				await stream.CopyToAsync(file, DefaultCopyBufferSize, cancellationToken).ConfigureAwait(false);
 			}

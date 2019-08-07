@@ -111,20 +111,20 @@ namespace Mono.ApiTools
 
 			if (string.IsNullOrEmpty(Version) && !Latest)
 			{
-				using (var reader = new PackageArchiveReader(Packages[0]))
-				using (var latest = new PackageArchiveReader(Packages[1]))
+				using (var older = new PackageArchiveReader(Packages[0]))
+				using (var reader = new PackageArchiveReader(Packages[1]))
 				{
-					DiffPackage(comparer, reader, latest).Wait();
+					DiffPackage(comparer, reader, older).Wait();
 				}
 			}
 			else
 			{
 				foreach (var nupkg in Packages)
 				{
-					using (var reader = new PackageArchiveReader(nupkg))
-					using (var latest = GetOtherPackage(comparer, reader).Result)
+					using (var older = new PackageArchiveReader(nupkg))
+					using (var latest = GetOtherPackage(comparer, older).Result)
 					{
-						DiffPackage(comparer, reader, latest).Wait();
+						DiffPackage(comparer, older, latest).Wait();
 					}
 				}
 			}
@@ -151,27 +151,27 @@ namespace Mono.ApiTools
 				latest = Version;
 			}
 
+
+			if (string.IsNullOrEmpty(latest))
+			{
+				if (Program.Verbose)
+					Console.WriteLine($"No package found for '{packageId}'...");
+				return null;
+			}
+
 			if (Program.Verbose)
 				Console.WriteLine($"Downloading version '{latest}' of '{packageId}'...");
 			return await comparer.OpenPackageAsync(packageId, latest);
 		}
 
-		private async Task DiffPackage(NuGetDiff comparer, PackageArchiveReader reader, PackageArchiveReader latestReader)
+		private async Task DiffPackage(NuGetDiff comparer, PackageArchiveReader reader, PackageArchiveReader olderReader)
 		{
-			// make sure the packages are in the correct order
-			if (reader.GetIdentity().Version > latestReader.GetIdentity().Version)
-			{
-				var temp = latestReader;
-				latestReader = reader;
-				reader = temp;
-			}
-
 			// get the id from the package and the version number
 			var identity = reader.GetIdentity();
 			var packageId = identity.Id;
 			var currentVersionNo = identity.Version.ToNormalizedString();
-			var latestIdentity = latestReader.GetIdentity();
-			var latestVersion = latestIdentity.Version.ToNormalizedString();
+			var olderIdentity = olderReader?.GetIdentity();
+			var olderVersion = olderIdentity?.Version?.ToNormalizedString();
 
 			// calculate the diff storage path from the location of the nuget
 			var diffRoot = OutputDirectory;
@@ -181,10 +181,10 @@ namespace Mono.ApiTools
 				diffRoot = Path.Combine(diffRoot, currentVersionNo);
 
 			// log what is going to happen
-			if (string.IsNullOrEmpty(latestVersion))
+			if (string.IsNullOrEmpty(olderVersion))
 				Console.WriteLine($"Running a diff on a new package '{packageId}'...");
 			else
-				Console.WriteLine($"Running a diff on '{latestVersion}' vs '{currentVersionNo}' of '{packageId}'...");
+				Console.WriteLine($"Running a diff on '{currentVersionNo}' vs '{olderVersion}' of '{packageId}'...");
 
 			// run the diff with all changes
 			comparer.SaveAssemblyApiInfo = true;        // we don't keep this, but it lets us know if there were no changes
@@ -192,15 +192,15 @@ namespace Mono.ApiTools
 			comparer.IgnoreResolutionErrors = true;     // we don't care if frameowrk/platform types can't be found
 			comparer.MarkdownDiffFileExtension = ".diff.md";
 			comparer.IgnoreNonBreakingChanges = false;
-			await comparer.SaveCompleteDiffToDirectoryAsync(reader, latestReader, diffRoot);
+			await comparer.SaveCompleteDiffToDirectoryAsync(olderReader, reader, diffRoot);
 
 			// run the diff with just the breaking changes
 			comparer.MarkdownDiffFileExtension = ".breaking.md";
 			comparer.IgnoreNonBreakingChanges = true;
-			await comparer.SaveCompleteDiffToDirectoryAsync(reader, latestReader, diffRoot);
+			await comparer.SaveCompleteDiffToDirectoryAsync(olderReader, reader, diffRoot);
 
 			// TODO: there are two bugs in this version of mono-api-html
-			var mdFiles = Directory.EnumerateFiles(diffRoot, "*.diff.md", SearchOption.AllDirectories);
+			var mdFiles = Directory.EnumerateFiles(diffRoot, "*.md", SearchOption.AllDirectories);
 			foreach (var md in mdFiles)
 			{
 				var contents = await File.ReadAllTextAsync(md);
