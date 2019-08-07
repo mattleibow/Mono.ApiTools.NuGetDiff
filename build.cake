@@ -67,8 +67,9 @@ Task("Test")
     Information("Running app tests...");
     var app = $"api-tools/bin/{configuration}/netcoreapp2.2/api-tools.dll";
     var id = "Mono.ApiTools.NuGetDiff";
-    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{packageVersion}.nupkg --latest --cache=externals --output=test-output");
-    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{packageVersion}.nupkg ./output/{id}.{packageVersion}.nupkg --output=test-output");
+    var version = prerelease ? previewVersion : packageVersion;
+    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{version}.nupkg --latest --cache=externals --output=test-output");
+    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{version}.nupkg ./output/{id}.{version}.nupkg --output=test-output");
 });
 
 Task("Default")
