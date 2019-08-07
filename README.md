@@ -1,6 +1,6 @@
 # NuGetDiff
 
-[![Build status](https://dotnetdevaddict.visualstudio.com/Mono.ApiTools.NuGetDiff/_apis/build/status/Build%20Mono.ApiTools.NuGetDiff)](https://dotnetdevaddict.visualstudio.com/Mono.ApiTools.NuGetDiff/_build/latest?definitionId=12) [![Build status](https://ci.appveyor.com/api/projects/status/y8yct1q94vxaw3i6/branch/master?svg=true)](https://ci.appveyor.com/project/mattleibow/nugetcomparer/branch/master) [![NuGet Pre Release](https://img.shields.io/nuget/vpre/Mono.ApiTools.NuGetDiff.svg)](https://www.nuget.org/packages/Mono.ApiTools.NuGetDiff)
+[![Build Status](https://dev.azure.com/mattleibow/OpenSource/_apis/build/status/Mono.ApiTools.NuGetDiff?branchName=master)](https://dev.azure.com/mattleibow/OpenSource/_build/latest?definitionId=20&branchName=master) [![Build status](https://ci.appveyor.com/api/projects/status/y8yct1q94vxaw3i6/branch/master?svg=true)](https://ci.appveyor.com/project/mattleibow/nugetcomparer/branch/master) [![NuGet Pre Release](https://img.shields.io/nuget/vpre/Mono.ApiTools.NuGetDiff.svg)](https://www.nuget.org/packages/Mono.ApiTools.NuGetDiff)
 
 A library to help with .NET API development and and NuGet diff-ing.
 
