@@ -32,6 +32,8 @@ namespace Mono.ApiTools
 
 		public bool PrePrelease { get; set; }
 
+		public bool IgnoreUnchanged { get; set; }
+
 		public string OutputDirectory { get; set; }
 
 		protected override OptionSet OnCreateOptions() => new OptionSet
@@ -42,6 +44,7 @@ namespace Mono.ApiTools
 			{ "latest", "Compare against the latest", v => Latest = true },
 			{ "output=", "The output directory", v => OutputDirectory = v },
 			{ "prerelease", "Include preprelease packages", v => PrePrelease = true },
+			{ "ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true },
 			{ "search-path=", "A search path directory", v => SearchPaths.Add(v) },
 			{ "version=", "The version of the package to compare", v => Version = v },
 		};
@@ -187,9 +190,10 @@ namespace Mono.ApiTools
 				Console.WriteLine($"Running a diff on '{currentVersionNo}' vs '{olderVersion}' of '{packageId}'...");
 
 			// run the diff with all changes
-			comparer.SaveAssemblyApiInfo = true;        // we don't keep this, but it lets us know if there were no changes
-			comparer.SaveAssemblyMarkdownDiff = true;   // we want markdown
-			comparer.IgnoreResolutionErrors = true;     // we don't care if frameowrk/platform types can't be found
+			comparer.SaveNuGetXmlDiff = false;                      // this is not needed for this type of diff
+			comparer.SaveAssemblyApiInfo = !IgnoreUnchanged;        // this lets us know if there were no changes
+			comparer.SaveAssemblyMarkdownDiff = true;               // we want markdown
+			comparer.IgnoreResolutionErrors = true;                 // we don't care if frameowrk/platform types can't be found
 			comparer.MarkdownDiffFileExtension = ".diff.md";
 			comparer.IgnoreNonBreakingChanges = false;
 			await comparer.SaveCompleteDiffToDirectoryAsync(olderReader, reader, diffRoot);
@@ -199,41 +203,44 @@ namespace Mono.ApiTools
 			comparer.IgnoreNonBreakingChanges = true;
 			await comparer.SaveCompleteDiffToDirectoryAsync(olderReader, reader, diffRoot);
 
-			// TODO: there are two bugs in this version of mono-api-html
-			var mdFiles = Directory.EnumerateFiles(diffRoot, "*.md", SearchOption.AllDirectories);
-			foreach (var md in mdFiles)
+			if (Directory.Exists(diffRoot))
 			{
-				var contents = await File.ReadAllTextAsync(md);
-
-				// 1. the <h4> doesn't look pretty in the markdown
-				contents = contents.Replace("<h4>", "> ");
-				contents = contents.Replace("</h4>", Environment.NewLine);
-
-				// 2. newlines are inccorrect on Windows: https://github.com/mono/mono/pull/9918
-				contents = contents.Replace("\r\r", "\r");
-
-				await File.WriteAllTextAsync(md, contents);
-			}
-
-			// clean up the changes
-			var xmlFiles = Directory.EnumerateFiles(diffRoot, "*.xml", SearchOption.AllDirectories);
-			foreach (var file in xmlFiles)
-			{
-				// make sure to create markdown files for unchanged assemblies
-				if (file.EndsWith(".new.info.xml", StringComparison.OrdinalIgnoreCase))
+				// TODO: there are two bugs in this version of mono-api-html
+				var mdFiles = Directory.EnumerateFiles(diffRoot, "*.md", SearchOption.AllDirectories);
+				foreach (var md in mdFiles)
 				{
-					var dll = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)));
-					var md = $"{Path.GetDirectoryName(file)}/{dll}.diff.md";
-					if (!File.Exists(md))
-					{
-						var n = Environment.NewLine;
-						var noChangesText = $"# API diff: {dll}{n}{n}## {dll}{n}{n}> No changes.{n}";
-						await File.WriteAllTextAsync(md, noChangesText);
-					}
+					var contents = await File.ReadAllTextAsync(md);
+
+					// 1. the <h4> doesn't look pretty in the markdown
+					contents = contents.Replace("<h4>", "> ");
+					contents = contents.Replace("</h4>", Environment.NewLine);
+
+					// 2. newlines are inccorrect on Windows: https://github.com/mono/mono/pull/9918
+					contents = contents.Replace("\r\r", "\r");
+
+					await File.WriteAllTextAsync(md, contents);
 				}
 
-				// delete the info files now
-				File.Delete(file);
+				// clean up the changes
+				var xmlFiles = Directory.EnumerateFiles(diffRoot, "*.xml", SearchOption.AllDirectories);
+				foreach (var file in xmlFiles)
+				{
+					// make sure to create markdown files for unchanged assemblies
+					if (file.EndsWith(".new.info.xml", StringComparison.OrdinalIgnoreCase))
+					{
+						var dll = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)));
+						var md = $"{Path.GetDirectoryName(file)}/{dll}.diff.md";
+						if (!File.Exists(md))
+						{
+							var n = Environment.NewLine;
+							var noChangesText = $"# API diff: {dll}{n}{n}## {dll}{n}{n}> No changes.{n}";
+							await File.WriteAllTextAsync(md, noChangesText);
+						}
+					}
+
+					// delete the info files now
+					File.Delete(file);
+				}
 			}
 
 			// we are done

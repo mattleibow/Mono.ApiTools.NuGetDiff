@@ -64,6 +64,8 @@ namespace Mono.ApiTools
 
 		public bool SaveAssemblyXmlDiff { get; set; } = false;
 
+		public bool SaveNuGetXmlDiff { get; set; } = true;
+
 		public string ApiInfoFileExtension { get; set; } = DefaultApiInfoFileExtension;
 
 		public string HtmlDiffFileExtension { get; set; } = DefaultHtmlDiffFileExtension;
@@ -515,10 +517,14 @@ namespace Mono.ApiTools
 				xpackage.Add(new XAttribute("warning_total", totalWarning));
 
 			// save the package diff
-			if (!Directory.Exists(outputDirectory))
-				Directory.CreateDirectory(outputDirectory);
-			var diffPath = Path.Combine(outputDirectory, $"{(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}.nupkg.diff.xml");
-			xPackageDiff.Save(diffPath);
+			if (SaveNuGetXmlDiff)
+			{
+				if (!Directory.Exists(outputDirectory))
+					Directory.CreateDirectory(outputDirectory);
+
+				var diffPath = Path.Combine(outputDirectory, $"{(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}.nupkg" + GetExt(ApiInfoFileExtension, DefaultApiInfoFileExtension));
+				xPackageDiff.Save(diffPath);
+			}
 
 			IEnumerable<(string newA, string oldA)> GetAllAssemblies(NuGetFramework framework)
 			{
