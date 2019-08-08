@@ -522,7 +522,7 @@ namespace Mono.ApiTools
 				if (!Directory.Exists(outputDirectory))
 					Directory.CreateDirectory(outputDirectory);
 
-				var diffPath = Path.Combine(outputDirectory, $"{(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}.nupkg" + GetExt(ApiInfoFileExtension, DefaultApiInfoFileExtension));
+				var diffPath = Path.Combine(outputDirectory, $"{(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}.nupkg" + GetExt(XmlDiffFileExtension, DefaultXmlDiffFileExtension));
 				xPackageDiff.Save(diffPath);
 			}
 
