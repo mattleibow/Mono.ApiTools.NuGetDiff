@@ -435,7 +435,7 @@ namespace Mono.ApiTools
 				using (var newInfo = await GenerateAssemblyApiInfoAsync(newReader, assembly, cancellationToken).ConfigureAwait(false))
 				using (var xmlDiff = await GenerateAssemblyXmlDiffAsync(oldInfo, newInfo, cancellationToken).ConfigureAwait(false))
 				{
-					// there were no changes at all, so skip this assembly
+					// there was a problem generating a diff, so bail out
 					if (xmlDiff.Length == 0)
 						continue;
 
@@ -448,10 +448,6 @@ namespace Mono.ApiTools
 					var xmissing = xassembly.Attribute("missing_total");
 					var xextras = xassembly.Attribute("extra_total");
 					var xwarnings = xassembly.Attribute("warning_total");
-
-					// there appears to be no changes or warnings, so skip as well
-					if (xmissing == null && xextras == null && xwarnings == null)
-						continue;
 
 					// copy the assembly changes to the package diff
 					var xPackageAssembly = xPackageDiff.Root.Descendants("assembly").FirstOrDefault(a => a.Attribute("path")?.Value == assembly);
