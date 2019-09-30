@@ -5,9 +5,10 @@ pool:
   name: 'Hosted Windows 2019 with VS2019'
 
 variables:
-  BUILD_NUMBER: $[counter('$(Build.SourceBranchName)_counter', 1)]
+  BASE_VERSION: 1.1.0
+  BUILD_NUMBER: $[counter(format('{0}_{1}', variables['BASE_VERSION'], variables['Build.SourceBranch'], 1)]
+  PACKAGE_VERSION: $(BASE_VERSION).$(BUILD_NUMBER)
   CONFIGURATION: 'Release'
-  PACKAGE_VERSION: '1.1.0.$(BUILD_NUMBER)'
   BUILD_PRERELEASE: true
   CAKE_VERSION: 0.35.0
   DOTNET_CORE_VERSION: 3.0.x
