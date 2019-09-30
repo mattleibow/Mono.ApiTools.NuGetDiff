@@ -14,11 +14,11 @@ point to diff a NuGet package:
 ## Building
 
 This project is very simple and can be built, packed and tested using
-`msbuild` and `dotnet`. But, to do everything in a single step, there is
-a cake script:
+`msbuild` and `dotnet`. But, to do everything in a single step, there
+is the .NET Core Cake tool ([`Cake.Tool`](https://www.nuget.org/packages/Cake.Tool)):
 
 ```
-.\build.ps1
+dotnet cake
 ```
 
 ## Using
