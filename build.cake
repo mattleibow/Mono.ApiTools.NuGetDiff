@@ -1,18 +1,18 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var prerelease = bool.Parse (Argument("prerelease", EnvironmentVariable ("BUILD_PRERELEASE") ?? "true"));
+var prerelease = Argument("prerelease", true);
 
 // a bit of logic to create the version number:
 //  - input                     = 1.2.3.4
 //  - package version           = 1.2.3
-//  - preview package version   = 1.2.3-preview-4
-var version = Version.Parse(Argument("packageversion", EnvironmentVariable("BUILD_BUILDNUMBER") ?? EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0.0"));
+//  - preview package version   = 1.2.3-preview.4
+var version         = Version.Parse(Argument("packageversion", "1.0.0.0"));
 var previewNumber   = version.Revision;
 var assemblyVersion = $"{version.Major}.0.0.0";
 var fileVersion     = $"{version.Major}.{version.Minor}.{version.Build}.0";
 var infoVersion     = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
 var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
-var previewVersion = packageVersion + "-preview." + previewNumber;
+var previewVersion  = packageVersion + "-preview." + previewNumber;
 
 Task("Build")
     .Does(() =>

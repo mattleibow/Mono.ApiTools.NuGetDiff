@@ -1,14 +1,26 @@
 pool:
-  vmImage: 'windows-latest'
+  name: 'Hosted Windows 2019 with VS2019'
 
 variables:
   BUILD_NUMBER: $[counter('$(Build.SourceBranchName)_counter', 1)]
   CONFIGURATION: 'Release'
-  PACKAGE_VERSION: '1.0.2.$(BUILD_NUMBER)'
-  # BUILD_PRERELEASE: [true|false]
+  PACKAGE_VERSION: '1.1.0.$(BUILD_NUMBER)'
+  BUILD_PRERELEASE: true
+  CAKE_VERSION: 0.35.0
+  DOTNET_CORE_VERSION: 3.0.x
 
 steps:
-  - powershell: .\build.ps1 --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)"
+  - task: UseDotNet@2
+    displayName: 'Use the correct version of the .NET Core SDK'
+    inputs:
+      version: $(DOTNET_CORE_VERSION)
+  - powershell: |
+      dotnet tool install -g cake.tool --version $(CAKE_VERSION)
+    displayName: 'Install .NET Core tools'
+
+  - powershell: dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
+    displayName: 'Run build'
+
   - task: PublishBuildArtifacts@1
     inputs:
       PathToPublish: output
