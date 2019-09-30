@@ -1,4 +1,3 @@
-
 trigger:
   - master
 
@@ -15,16 +14,11 @@ variables:
 
 steps:
   - task: UseDotNet@2
-    displayName: 'Use the correct version of the .NET Core SDK'
     inputs:
       version: $(DOTNET_CORE_VERSION)
   - powershell: |
       dotnet tool install -g cake.tool --version $(CAKE_VERSION)
-    displayName: 'Install .NET Core tools'
-
   - powershell: dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
-    displayName: 'Run build'
-
   - task: PublishBuildArtifacts@1
     inputs:
       PathToPublish: output
