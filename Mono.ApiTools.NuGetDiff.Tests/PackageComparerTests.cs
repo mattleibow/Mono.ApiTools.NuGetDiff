@@ -422,6 +422,10 @@ namespace Mono.ApiTools.Tests
 			Assert.Equal("lib/portable-net45+win8+wpa81+wp8/SkiaSharp.dll", xStdAss.Attribute("old_path").Value);
 			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
 			var netFile = File.ReadAllText(Path.Combine(diffDir, "net45", "SkiaSharp.dll.diff.md"));
+
+			// replace the new .NET Standard type
+			netFile = netFile.Replace("System.IAsyncDisposable, System.IDisposable", "System.IDisposable");
+
 			Assert.Equal(netStdFile, netFile);
 		}
 
