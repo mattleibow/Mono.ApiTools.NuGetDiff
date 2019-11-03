@@ -23,11 +23,14 @@ namespace Mono.ApiTools
 
 		public List<string> Assemblies { get; set; } = new List<string>();
 
-		public string OutputDirectory { get; set; }
+		public string OutputPath { get; set; }
+
+		public bool IgnoreNonbreaking { get; set; }
 
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
-			{ "output=", "The output directory", v => OutputDirectory = v },
+			{ "o|output=", "The output file path", v => OutputPath = v },
+			{ "ignore-nonbreaking", "Ignore the non-breaking changes and just output breaking changes", v => IgnoreNonbreaking = true },
 		};
 
 		protected override bool OnValidateArguments(IEnumerable<string> extras)
@@ -61,18 +64,13 @@ namespace Mono.ApiTools
 				hasError = true;
 			}
 
-			if (string.IsNullOrEmpty(OutputDirectory))
-				OutputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "diff");
-
 			return !hasError;
 		}
 
 		protected override bool OnInvoke(IEnumerable<string> extras)
 		{
-			if (!Directory.Exists(OutputDirectory))
-				Directory.CreateDirectory(OutputDirectory);
-
-			Console.WriteLine($"Running a diff on '{Assemblies[0]}' vs '{Assemblies[1]}'...");
+			if (Program.Verbose)
+				Console.WriteLine($"Running a diff on '{Assemblies[0]}' vs '{Assemblies[1]}'...");
 
 			using (var oldStream = File.OpenRead(Assemblies[0]))
 			using (var newStream = File.OpenRead(Assemblies[1]))
@@ -93,26 +91,41 @@ namespace Mono.ApiTools
 			string assemblyName;
 			(newApiXml, assemblyName) = await RenameAssemblyAsync(oldApiXml, newApiXml);
 
-			using (var diffStream = GenerateDiff(oldApiXml, newApiXml, false))
-			{
-				await SaveDiffAsync(diffStream, $"{assemblyName}.diff.md");
-			}
+			// generate the diff
+			using var diffStream = GenerateDiff(oldApiXml, newApiXml, assemblyName);
+			await FixBugsAsync(diffStream);
 
-			using (var diffStream = GenerateDiff(oldApiXml, newApiXml, true))
+			if (!string.IsNullOrEmpty(OutputPath))
 			{
-				await SaveDiffAsync(diffStream, $"{assemblyName}.breaking.md");
+				var dir = Path.GetDirectoryName(OutputPath);
+				if (!Directory.Exists(dir))
+					Directory.CreateDirectory(dir);
+
+				// write the file
+				using var file = File.Create(OutputPath);
+				await diffStream.CopyToAsync(file);
+			}
+			else
+			{
+				// write to console out
+				using var md = new StreamReader(diffStream);
+				var contents = await md.ReadToEndAsync();
+				await Console.Out.WriteAsync(contents);
 			}
 
 			// we are done
-			Console.WriteLine($"Diff complete of '{assemblyName}'.");
+			if (Program.Verbose)
+				Console.WriteLine($"Diff complete of '{assemblyName}'.");
 		}
 
-		private async Task SaveDiffAsync(Stream diffStream, string filename)
+		private async Task FixBugsAsync(Stream diffStream)
 		{
 			// TODO: there are two bugs in this version of mono-api-html
-			using var md = new StreamReader(diffStream);
-
-			var contents = await md.ReadToEndAsync();
+			string contents;
+			using (var md = new StreamReader(diffStream, UTF8NoBOM, false, DefaultSaveBufferSize, true))
+			{
+				contents = await md.ReadToEndAsync();
+			}
 
 			// 1. the <h4> doesn't look pretty in the markdown
 			contents = contents.Replace("<h4>", "> ");
@@ -121,7 +134,13 @@ namespace Mono.ApiTools
 			// 2. newlines are inccorrect on Windows: https://github.com/mono/mono/pull/9918
 			contents = contents.Replace("\r\r", "\r");
 
-			await File.WriteAllTextAsync(Path.Combine(OutputDirectory, filename), contents);
+			// write the contents back to the stream
+			diffStream.SetLength(0);
+			using (var writer = new StreamWriter(diffStream, UTF8NoBOM, DefaultSaveBufferSize, true))
+			{
+				writer.Write(contents);
+			}
+			diffStream.Position = 0;
 		}
 
 		private Stream GenerateAssemblyApiInfo(Stream assemblyStream)
@@ -144,12 +163,12 @@ namespace Mono.ApiTools
 			return info;
 		}
 
-		private Stream GenerateDiff(Stream oldApiXml, Stream newApiXml, bool ignoreNonbreaking)
+		private Stream GenerateDiff(Stream oldApiXml, Stream newApiXml, string assemblyName)
 		{
 			var config = new ApiDiffFormattedConfig
 			{
 				Formatter = ApiDiffFormatter.Markdown,
-				IgnoreNonbreaking = ignoreNonbreaking
+				IgnoreNonbreaking = IgnoreNonbreaking
 			};
 
 			var diff = new MemoryStream();
@@ -157,6 +176,16 @@ namespace Mono.ApiTools
 			using (var writer = new StreamWriter(diff, UTF8NoBOM, DefaultSaveBufferSize, true))
 			{
 				ApiDiffFormatted.Generate(oldApiXml, newApiXml, writer, config);
+			}
+
+			if (diff.Length == 0)
+			{
+				using var writer = new StreamWriter(diff, UTF8NoBOM, DefaultSaveBufferSize, true);
+				writer.WriteLine($"# API diff: {assemblyName}.dll");
+				writer.WriteLine();
+				writer.WriteLine($"## {assemblyName}.dll");
+				writer.WriteLine();
+				writer.WriteLine($"> No changes.");
 			}
 
 			oldApiXml.Position = 0;
@@ -178,7 +207,8 @@ namespace Mono.ApiTools
 
 			if (newName.Value != assemblyName)
 			{
-				Console.WriteLine($"WARNING: Assembly name changed from '{assemblyName}' to '{newName.Value}'.");
+				if (Program.Verbose)
+					Console.WriteLine($"WARNING: Assembly name changed from '{assemblyName}' to '{newName.Value}'.");
 				newName.Value = assemblyName;
 
 				newApiXml.Dispose();
