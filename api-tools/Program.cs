@@ -20,6 +20,7 @@ namespace Mono.ApiTools
 				{ "v|verbose", "Use a more verbose output", _ => Verbose = true },
 				"",
 				"Available commands:",
+				new DiffCommand(),
 				new NuGetDiffCommand(),
 			};
 			return commands.Run(args);
