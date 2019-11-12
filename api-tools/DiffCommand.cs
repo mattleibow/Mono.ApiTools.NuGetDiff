@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace Mono.ApiTools
@@ -37,7 +38,7 @@ namespace Mono.ApiTools
 		{
 			var hasError = false;
 
-			var assemblies = extras.Where(p => !string.IsNullOrEmpty(p)).ToArray();
+			var assemblies = extras.Where(p => !string.IsNullOrWhiteSpace(p)).ToArray();
 
 			foreach (var ass in assemblies)
 			{
@@ -52,16 +53,17 @@ namespace Mono.ApiTools
 				}
 			}
 
-			if (Assemblies.Count == 0)
-			{
-				Console.Error.WriteLine($"{Program.Name}: At least one assembly is required.");
-				hasError = true;
-			}
-
 			if (Assemblies.Count != 2)
 			{
 				Console.Error.WriteLine($"{Program.Name}: Exactly two assemblies are required.");
 				hasError = true;
+			}
+
+			if (!string.IsNullOrWhiteSpace(OutputPath))
+			{
+				var dir = Path.GetDirectoryName(OutputPath);
+				if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
+					Directory.CreateDirectory(dir);
 			}
 
 			return !hasError;
@@ -95,12 +97,8 @@ namespace Mono.ApiTools
 			using var diffStream = GenerateDiff(oldApiXml, newApiXml, assemblyName);
 			await FixBugsAsync(diffStream);
 
-			if (!string.IsNullOrEmpty(OutputPath))
+			if (!string.IsNullOrWhiteSpace(OutputPath))
 			{
-				var dir = Path.GetDirectoryName(OutputPath);
-				if (!Directory.Exists(dir))
-					Directory.CreateDirectory(dir);
-
 				// write the file
 				using var file = File.Create(OutputPath);
 				await diffStream.CopyToAsync(file);
@@ -145,22 +143,48 @@ namespace Mono.ApiTools
 
 		private Stream GenerateAssemblyApiInfo(Stream assemblyStream)
 		{
-			var config = new ApiInfoConfig
+			// try loading the file as an assembly, and then create the API info
+			try
 			{
-				IgnoreResolutionErrors = true
-			};
+				assemblyStream.Position = 0;
 
-			var info = new MemoryStream();
+				var config = new ApiInfoConfig
+				{
+					IgnoreResolutionErrors = true
+				};
 
-			using (var writer = new StreamWriter(info, UTF8NoBOM, DefaultSaveBufferSize, true))
+				var info = new MemoryStream();
+
+				using (var writer = new StreamWriter(info, UTF8NoBOM, DefaultSaveBufferSize, true))
+				{
+					ApiInfo.Generate(assemblyStream, writer, config);
+				}
+
+				assemblyStream.Position = 0;
+				info.Position = 0;
+
+				return info;
+			}
+			catch (BadImageFormatException)
 			{
-				ApiInfo.Generate(assemblyStream, writer, config);
 			}
 
-			assemblyStream.Position = 0;
-			info.Position = 0;
+			// try loading as an API info
+			try
+			{
+				assemblyStream.Position = 0;
 
-			return info;
+				var xdoc = XDocument.Load(assemblyStream);
+
+				assemblyStream.Position = 0;
+
+				return assemblyStream;
+			}
+			catch (XmlException)
+			{
+			}
+
+			throw new InvalidOperationException("Input was in an incorrect format.");
 		}
 
 		private Stream GenerateDiff(Stream oldApiXml, Stream newApiXml, string assemblyName)
