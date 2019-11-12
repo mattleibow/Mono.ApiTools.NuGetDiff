@@ -9,7 +9,7 @@ namespace Mono.ApiTools
 	public class MergeCommand : BaseCommand
 	{
 		public MergeCommand()
-			: base("merge", "ASSEMBLY | DIRECTORY", "Merge multiple .NET assemlies.")
+			: base("merge", "ASSEMBLY | DIRECTORY", "Merge multiple .NET assemblies.")
 		{
 		}
 
