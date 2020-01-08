@@ -35,8 +35,8 @@ namespace Mono.ApiTools
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "o|output=", "The output file path", v => OutputPath = v },
-			{ "ignore-nonbreaking", "Ignore the non-breaking changes and just output breaking changes", v => IgnoreNonbreaking = true },
-			{ "ignore-parameter-names", "Ignore the changes to parameter names", v => IgnoreParameterNames = true },
+			{ "ignore-nonbreaking", "Ignore the non-breaking API changes", v => IgnoreNonbreaking = true },
+			{ "ignore-param-names", "Ignore the changes to parameter names", v => IgnoreParameterNames = true },
 			{ "ignore-virtual", "Ignore the changes to virtual modifiers", v => IgnoreVirtualChanges = true },
 		};
 
