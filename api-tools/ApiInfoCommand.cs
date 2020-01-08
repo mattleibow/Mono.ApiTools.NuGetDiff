@@ -22,12 +22,9 @@ namespace Mono.ApiTools
 
 		public string OutputPath { get; set; }
 
-		public bool IgnoreNonbreaking { get; set; }
-
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "o|output=", "The output file path", v => OutputPath = v },
-			{ "ignore-nonbreaking", "Ignore the non-breaking changes and just output breaking changes", v => IgnoreNonbreaking = true },
 		};
 
 		protected override bool OnValidateArguments(IEnumerable<string> extras)
