@@ -36,6 +36,8 @@ namespace Mono.ApiTools
 
 		public string OutputDirectory { get; set; }
 
+		public List<string> IgnoreMembers { get; set; } = new List<string>();
+
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "cache=", "The package cache directory", v => PackageCache = v },
@@ -45,6 +47,7 @@ namespace Mono.ApiTools
 			{ "output=", "The output directory", v => OutputDirectory = v },
 			{ "prerelease", "Include preprelease packages", v => PrePrelease = true },
 			{ "ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true },
+			{ "ignore-member=", "Ignore changes to members which match an XPath", v => IgnoreMembers.Add(v) },
 			{ "search-path=", "A search path directory", v => SearchPaths.Add(v) },
 			{ "version=", "The version of the package to compare", v => Version = v },
 		};
@@ -111,6 +114,7 @@ namespace Mono.ApiTools
 			var comparer = new NuGetDiff();
 			comparer.SearchPaths.AddRange(SearchPaths);
 			comparer.PackageCache = PackageCache;
+			comparer.IgnoreMembers = IgnoreMembers;
 
 			if (string.IsNullOrEmpty(Version) && !Latest)
 			{

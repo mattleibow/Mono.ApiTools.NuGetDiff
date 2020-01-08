@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Mono.ApiTools;
+using System.Xml.XPath;
 using NuGet.Common;
 using NuGet.Frameworks;
 using NuGet.Packaging;
@@ -73,6 +73,8 @@ namespace Mono.ApiTools
 		public string MarkdownDiffFileExtension { get; set; } = DefaultMarkdownDiffFileExtension;
 
 		public string XmlDiffFileExtension { get; set; } = DefaultXmlDiffFileExtension;
+
+		public List<string> IgnoreMembers { get; set; } = new List<string>();
 
 
 		// GenerateAsync
@@ -302,6 +304,22 @@ namespace Mono.ApiTools
 				}
 
 				ApiInfo.Generate(buffer, writer, config);
+			}
+
+			// remove any members that are listed
+			if (IgnoreMembers?.Count > 0)
+			{
+				info.Position = 0;
+				var xdoc = XDocument.Load(info);
+				info.Dispose();
+
+				foreach (var match in IgnoreMembers)
+				{
+					xdoc.XPathSelectElements(match).Remove();
+				}
+
+				info = new MemoryStream();
+				xdoc.Save(info);
 			}
 
 			info.Position = 0;
