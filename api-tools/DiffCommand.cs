@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mono.Options;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,8 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-using System.Xml.XPath;
-using Mono.Options;
 
 namespace Mono.ApiTools
 {
@@ -29,13 +28,10 @@ namespace Mono.ApiTools
 
 		public bool IgnoreNonbreaking { get; set; }
 
-		public List<string> IgnoreMembers { get; set; } = new List<string>();
-
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "o|output=", "The output file path", v => OutputPath = v },
 			{ "ignore-nonbreaking", "Ignore the non-breaking changes and just output breaking changes", v => IgnoreNonbreaking = true },
-			{ "ignore-member=", "Ignore changes to members which match an XPath", v => IgnoreMembers.Add(v) },
 		};
 
 		protected override bool OnValidateArguments(IEnumerable<string> extras)
@@ -90,12 +86,12 @@ namespace Mono.ApiTools
 		private async Task DiffAssembliesAsync(Stream newStream, Stream oldStream)
 		{
 			// create the api xml
-			using var oldApiXml = GenerateAssemblyApiInfo(oldStream);
-			using var originalNewApiXml = GenerateAssemblyApiInfo(newStream);
+			var oldApiXml = GenerateAssemblyApiInfo(oldStream);
+			var newApiXml = GenerateAssemblyApiInfo(newStream);
 
 			// make sure the assembly names are the same for the comparison
-			var (xml, assemblyName) = await RenameAssemblyAsync(oldApiXml, originalNewApiXml);
-			using var newApiXml = xml;
+			string assemblyName;
+			(newApiXml, assemblyName) = await RenameAssemblyAsync(oldApiXml, newApiXml);
 
 			// generate the diff
 			using var diffStream = GenerateDiff(oldApiXml, newApiXml, assemblyName);
@@ -167,13 +163,13 @@ namespace Mono.ApiTools
 				assemblyStream.Position = 0;
 				info.Position = 0;
 
-				assemblyStream = info;
+				return info;
 			}
 			catch (BadImageFormatException)
 			{
 			}
 
-			// now, try loading as an API info
+			// try loading as an API info
 			try
 			{
 				assemblyStream.Position = 0;
@@ -182,21 +178,7 @@ namespace Mono.ApiTools
 
 				assemblyStream.Position = 0;
 
-				if (IgnoreMembers?.Count > 0)
-				{
-					foreach (var match in IgnoreMembers)
-					{
-						xdoc.XPathSelectElements(match).Remove();
-					}
-				}
-
-				var finalStream = new MemoryStream();
-
-				xdoc.Save(finalStream);
-
-				finalStream.Position = 0;
-
-				return finalStream;
+				return assemblyStream;
 			}
 			catch (XmlException)
 			{
