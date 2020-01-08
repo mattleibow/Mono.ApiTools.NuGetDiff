@@ -28,10 +28,16 @@ namespace Mono.ApiTools
 
 		public bool IgnoreNonbreaking { get; set; }
 
+		public bool IgnoreParameterNames { get; set; }
+
+		public bool IgnoreVirtualChanges { get; set; }
+
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "o|output=", "The output file path", v => OutputPath = v },
 			{ "ignore-nonbreaking", "Ignore the non-breaking changes and just output breaking changes", v => IgnoreNonbreaking = true },
+			{ "ignore-parameter-names", "Ignore the changes to parameter names", v => IgnoreParameterNames = true },
+			{ "ignore-virtual", "Ignore the changes to virtual modifiers", v => IgnoreVirtualChanges = true },
 		};
 
 		protected override bool OnValidateArguments(IEnumerable<string> extras)
@@ -192,7 +198,9 @@ namespace Mono.ApiTools
 			var config = new ApiDiffFormattedConfig
 			{
 				Formatter = ApiDiffFormatter.Markdown,
-				IgnoreNonbreaking = IgnoreNonbreaking
+				IgnoreNonbreaking = IgnoreNonbreaking,
+				IgnoreParameterNameChanges = IgnoreParameterNames,
+				IgnoreVirtualChanges = IgnoreVirtualChanges,
 			};
 
 			var diff = new MemoryStream();
