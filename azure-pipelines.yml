@@ -27,8 +27,8 @@ steps:
       artifactName: nuget
   - task: PublishBuildArtifacts@1
     inputs:
-      pathToPublish: test-output
-      artifactName: test-output
+      pathToPublish: diff
+      artifactName: diff
   - task: PublishTestResults@2
     condition: always()
     inputs:
