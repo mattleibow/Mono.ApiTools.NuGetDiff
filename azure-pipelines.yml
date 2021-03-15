@@ -23,8 +23,12 @@ steps:
   - powershell: dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
   - task: PublishBuildArtifacts@1
     inputs:
-      PathToPublish: output
-      ArtifactName: nuget
+      pathToPublish: output
+      artifactName: nuget
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: test-output
+      artifactName: test-output
   - task: PublishTestResults@2
     condition: always()
     inputs:
