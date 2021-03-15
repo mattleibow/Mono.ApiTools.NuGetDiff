@@ -1,10 +1,6 @@
-using NuGet.Versioning;
-using System;
 using System.Linq;
-using System.Net.Http;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
+using NuGet.Versioning;
 using Xunit;
 
 namespace Mono.ApiTools.Tests
@@ -165,6 +161,35 @@ namespace Mono.ApiTools.Tests
 			var version = await NuGetVersions.GetAllAsync("Xamarin.Forms", settings);
 
 			Assert.Empty(version);
+		}
+
+		[Fact]
+		public async Task TestGetLatestWithRange()
+		{
+			var version = await NuGetVersions.GetLatestAsync(
+				"Microsoft.Extensions.DependencyInjection",
+				new NuGetVersions.Filter
+				{
+					VersionRange = VersionRange.Parse("5.0.0")
+				});
+
+			Assert.Equal(NuGetVersion.Parse("5.0.0"), version);
+		}
+
+		[Theory]
+		[InlineData("[5.0.0-preview.*,5.0.0)", "5.0.0-preview.8.20407.11")]
+		[InlineData("[5.0.0-preview.7.*,5.0.0)", "5.0.0-preview.7.20364.11")]
+		public async Task TestGetLatestWithPreReleaseRange(string range, string matched)
+		{
+			var version = await NuGetVersions.GetLatestAsync(
+				"Microsoft.Extensions.DependencyInjection",
+				new NuGetVersions.Filter
+				{
+					IncludePrerelease = true,
+					VersionRange = VersionRange.Parse(range),
+				});
+
+			Assert.Equal(NuGetVersion.Parse(matched), version);
 		}
 	}
 }

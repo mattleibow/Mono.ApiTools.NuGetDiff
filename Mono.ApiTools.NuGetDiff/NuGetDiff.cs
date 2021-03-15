@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Mono.ApiTools;
 using NuGet.Common;
 using NuGet.Frameworks;
 using NuGet.Packaging;
@@ -19,6 +18,8 @@ namespace Mono.ApiTools
 {
 	public class NuGetDiff
 	{
+		internal const string NuGetSourceUrl = "https://api.nuget.org/v3/index.json";
+
 		private const int DefaultSaveBufferSize = 1024;
 		private const int DefaultCopyBufferSize = 81920;
 		private static readonly Encoding UTF8NoBOM = new UTF8Encoding(false, true);
@@ -27,14 +28,18 @@ namespace Mono.ApiTools
 		private const string DefaultHtmlDiffFileExtension = ".diff.html";
 		private const string DefaultMarkdownDiffFileExtension = ".diff.md";
 		private const string DefaultApiInfoFileExtension = ".info.xml";
+		private readonly SourceRepository source;
+		private readonly SourceCacheContext cache;
+		private readonly ILogger logger;
 
-		private static readonly SourceRepository source;
-		private static readonly SourceCacheContext cache;
-		private static readonly ILogger logger;
-
-		static NuGetDiff()
+		public NuGetDiff()
+			: this(NuGetSourceUrl)
 		{
-			source = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		}
+
+		public NuGetDiff(string sourceUrl)
+		{
+			source = Repository.Factory.GetCoreV3(sourceUrl);
 			cache = new SourceCacheContext();
 			logger = NullLogger.Instance;
 		}

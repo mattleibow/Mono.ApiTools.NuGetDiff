@@ -17,7 +17,7 @@ namespace Mono.ApiTools
 
 		static NuGetVersions()
 		{
-			source = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+			source = Repository.Factory.GetCoreV3(NuGetDiff.NuGetSourceUrl);
 			cache = new SourceCacheContext();
 			logger = NullLogger.Instance;
 		}
@@ -25,6 +25,10 @@ namespace Mono.ApiTools
 		public static async Task<NuGetVersion> GetLatestAsync(string id, Filter filter = null, CancellationToken cancellationToken = default)
 		{
 			var versions = await EnumerateAllAsync(id, filter, cancellationToken);
+
+			if (filter?.VersionRange != null)
+				return filter.VersionRange.FindBestMatch(versions);
+
 			return versions.Reverse().FirstOrDefault();
 		}
 
@@ -36,9 +40,14 @@ namespace Mono.ApiTools
 
 		private static async Task<IEnumerable<NuGetVersion>> EnumerateAllAsync(string id, Filter filter, CancellationToken cancellationToken)
 		{
-			filter = filter ?? new Filter();
+			var sourceToUse = source;
 
-			var resource = await source.GetResourceAsync<MetadataResource>(cancellationToken);
+			filter ??= new Filter();
+
+			if(!string.IsNullOrEmpty(filter.SourceUrl))
+				sourceToUse = Repository.Factory.GetCoreV3(filter.SourceUrl);
+
+			var resource = await sourceToUse.GetResourceAsync<MetadataResource>(cancellationToken);
 
 			var versions = await resource.GetVersions(id, filter.IncludePrerelease, filter.IncludeUnlisted, cache, logger, cancellationToken);
 
@@ -58,6 +67,10 @@ namespace Mono.ApiTools
 			public NuGetVersion MinimumVersion { get; set; }
 
 			public NuGetVersion MaximumVersion { get; set; }
+
+			public VersionRange VersionRange { get; set; }
+
+			public string SourceUrl { get; set; }
 		}
 	}
 }
