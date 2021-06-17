@@ -626,6 +626,32 @@ namespace Mono.ApiTools.Tests
 			}
 		}
 
+		[Fact]
+		public async Task TestDoesIgnoreMembers()
+		{
+			var path = GenerateTestOutputPath();
+
+			// generate diff with missing references
+			var missing = new NuGetDiff
+			{
+				IgnoreResolutionErrors = true,
+				IgnoreInheritedInterfaces = true,
+				SaveAssemblyMarkdownDiff = true,
+				IgnoreAddedAssemblies = true,
+				IgnoreSimilarFrameworks = true,
+				IgnoreMemberRegex =
+				{
+					@"\.IServiceProviderExtensions\:",
+				}
+			};
+
+			await missing.SaveCompleteDiffToDirectoryAsync(FormsPackageId, FormsV25Number1, FormsV31Number1, path);
+
+			var allFile = await File.ReadAllTextAsync(Path.Combine(path, "MonoAndroid10/Xamarin.Forms.Core.dll.diff.md"));
+
+			Assert.DoesNotContain("IServiceProviderExtensions", allFile);
+		}
+
 		private static string GenerateTestOutputPath()
 		{
 			var dir = Path.Combine(Path.GetTempPath(), "Mono.ApiTools.NuGetDiff");

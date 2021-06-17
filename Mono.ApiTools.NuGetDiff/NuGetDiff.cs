@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -48,6 +49,8 @@ namespace Mono.ApiTools
 		// Properties
 
 		public List<string> SearchPaths { get; set; } = new List<string>();
+
+		public List<string> IgnoreMemberRegex { get; set; } = new List<string>();
 
 		public string PackageCache { get; set; } = "packages";
 
@@ -758,6 +761,15 @@ namespace Mono.ApiTools
 
 			config.Formatter = formatter;
 			config.IgnoreNonbreaking = IgnoreNonBreakingChanges;
+
+			foreach (var ignoreMember in IgnoreMemberRegex)
+			{
+				var regex = new Regex(ignoreMember);
+
+				config.IgnoreAdded.Add(regex);
+				config.IgnoreNew.Add(regex);
+				config.IgnoreRemoved.Add(regex);
+			}
 
 			return config;
 		}
