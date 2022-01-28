@@ -8,6 +8,7 @@
     <AssemblyName>api-tools</AssemblyName>
     <ToolCommandName>api-tools</ToolCommandName>
     <PackAsTool>true</PackAsTool>
+    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <PropertyGroup>
