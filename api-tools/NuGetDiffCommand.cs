@@ -36,6 +36,8 @@ namespace Mono.ApiTools
 
 		public string OutputDirectory { get; set; }
 
+		public string Source { get; set; } = "https://api.nuget.org/v3/index.json";
+
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "cache=", "The package cache directory", v => PackageCache = v },
@@ -46,6 +48,7 @@ namespace Mono.ApiTools
 			{ "prerelease", "Include preprelease packages", v => PrePrelease = true },
 			{ "ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true },
 			{ "search-path=", "A search path directory", v => SearchPaths.Add(v) },
+			{ "source=", "The NuGet URL source", v => Source = v },
 			{ "version=", "The version of the package to compare", v => Version = v },
 		};
 
@@ -108,7 +111,7 @@ namespace Mono.ApiTools
 		protected override bool OnInvoke(IEnumerable<string> extras)
 		{
 			// create comparer
-			var comparer = new NuGetDiff();
+			var comparer = new NuGetDiff(Source);
 			comparer.SearchPaths.AddRange(SearchPaths);
 			comparer.PackageCache = PackageCache;
 
