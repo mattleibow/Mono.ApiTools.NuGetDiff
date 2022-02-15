@@ -36,6 +36,8 @@ namespace Mono.ApiTools
 
 		public string OutputDirectory { get; set; }
 
+		public string SourceUrl { get; set; } = "https://api.nuget.org/v3/index.json";
+
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "cache=", "The package cache directory", v => PackageCache = v },
@@ -46,6 +48,7 @@ namespace Mono.ApiTools
 			{ "prerelease", "Include preprelease packages", v => PrePrelease = true },
 			{ "ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true },
 			{ "search-path=", "A search path directory", v => SearchPaths.Add(v) },
+			{ "source=", "The NuGet URL source", v => SourceUrl = v },
 			{ "version=", "The version of the package to compare", v => Version = v },
 		};
 
@@ -108,7 +111,7 @@ namespace Mono.ApiTools
 		protected override bool OnInvoke(IEnumerable<string> extras)
 		{
 			// create comparer
-			var comparer = new NuGetDiff();
+			var comparer = new NuGetDiff(SourceUrl);
 			comparer.SearchPaths.AddRange(SearchPaths);
 			comparer.PackageCache = PackageCache;
 
@@ -146,7 +149,11 @@ namespace Mono.ApiTools
 				// get the latest version of this package - if any
 				if (Program.Verbose)
 					Console.WriteLine($"Determining the latest version of '{packageId}'...");
-				var filter = new NuGetVersions.Filter { IncludePrerelease = PrePrelease };
+				var filter = new NuGetVersions.Filter
+				{
+					IncludePrerelease = PrePrelease,
+					SourceUrl = SourceUrl,
+				};
 				latest = (await NuGetVersions.GetLatestAsync(packageId, filter))?.ToNormalizedString();
 			}
 			else
