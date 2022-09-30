@@ -19,6 +19,7 @@ steps:
       version: $(DOTNET_CORE_VERSION)
       performMultiLevelLookup: true
   - powershell: |
+      dotnet --info
       dotnet tool install -g cake.tool --version $(CAKE_VERSION)
   - powershell: dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
   - task: PublishBuildArtifacts@1
