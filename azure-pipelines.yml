@@ -2,7 +2,7 @@ trigger:
   - master
 
 pool:
-  vmImage: 'windows-latest'
+  name: 'Hosted Windows 2019 with VS2019'
 
 variables:
   BASE_VERSION: 1.3.5
@@ -11,8 +11,14 @@ variables:
   CONFIGURATION: 'Release'
   BUILD_PRERELEASE: false
   CAKE_VERSION: 2.2.0
+  DOTNET_CORE_VERSION: 6.x
 
 steps:
+  - task: UseDotNet@2
+    inputs:
+      version: $(DOTNET_CORE_VERSION)
+      performMultiLevelLookup: true
+      installationPath: C:\Program Files\dotnet
   - powershell: |
       dotnet --info
       dotnet tool install -g cake.tool --version $(CAKE_VERSION)
