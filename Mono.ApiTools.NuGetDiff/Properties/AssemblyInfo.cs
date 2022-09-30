@@ -1,3 +1,3 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Mono.ApiTools.Tests")]
+[assembly: InternalsVisibleTo("Mono.ApiTools.NuGetDiff.Tests")]

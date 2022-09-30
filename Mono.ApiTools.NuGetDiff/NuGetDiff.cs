@@ -241,38 +241,6 @@ namespace Mono.ApiTools
 
 			return result;
 
-			NuGetFramework TryMatchFramework(NuGetFramework added, NuGetFramework[] choices)
-			{
-				// there may be a case where the spelling has changed
-				var exact = choices.FirstOrDefault(fw => fw == added);
-				if (exact != null)
-					return exact;
-
-				// match frameworks that have just changed version
-				var name = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, added));
-				if (name != null)
-					return name;
-
-				// .NET Standard may have been an upgrade from PCL
-				var netstd = new NuGetFramework(".NETStandard");
-				var pcl = new NuGetFramework(".NETPortable");
-				if (NuGetFramework.FrameworkNameComparer.Equals(added, netstd))
-				{
-					var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, pcl));
-					if (pclnetstd != null)
-						return pclnetstd;
-				}
-				// the horror that a .NET Standard was devolved into a PCL
-				if (NuGetFramework.FrameworkNameComparer.Equals(added, pcl))
-				{
-					var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, netstd));
-					if (pclnetstd != null)
-						return pclnetstd;
-				}
-
-				return null;
-			}
-
 			(string path, string name)[] GetFrameworkAssemblies(NuGetFramework fw, IEnumerable<FrameworkSpecificGroup> items)
 			{
 				return items
@@ -715,6 +683,46 @@ namespace Mono.ApiTools
 
 
 		// Private members
+
+		internal static NuGetFramework TryMatchFramework(NuGetFramework added, NuGetFramework[] choices)
+		{
+			// there may be a case where the spelling has changed
+			var exact = choices.FirstOrDefault(fw => fw == added);
+			if (exact != null)
+				return exact;
+
+			// match frameworks
+			var compatible = choices
+				.Where(fw => NuGetFrameworkUtility.IsCompatibleWithFallbackCheck(added, fw))
+				.ToArray();
+			if (compatible?.Length > 0)
+			{
+				var sorted = compatible
+					.OrderBy(f => f, new FrameworkPrecedenceSorter(DefaultFrameworkNameProvider.Instance, false))
+					.ThenByDescending(f => f, new NuGetFrameworkSorter())
+					.ToArray();
+				return sorted.FirstOrDefault();
+			}
+
+			// .NET Standard may have been an upgrade from PCL
+			var netstd = new NuGetFramework(".NETStandard");
+			var pcl = new NuGetFramework(".NETPortable");
+			if (NuGetFramework.FrameworkNameComparer.Equals(added, netstd))
+			{
+				var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, pcl));
+				if (pclnetstd != null)
+					return pclnetstd;
+			}
+			// the horror that a .NET Standard was devolved into a PCL
+			if (NuGetFramework.FrameworkNameComparer.Equals(added, pcl))
+			{
+				var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, netstd));
+				if (pclnetstd != null)
+					return pclnetstd;
+			}
+
+			return null;
+		}
 
 		private static string GetExt(string extension, string fallback)
 		{

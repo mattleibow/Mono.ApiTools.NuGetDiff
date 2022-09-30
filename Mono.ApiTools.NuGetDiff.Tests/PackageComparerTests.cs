@@ -652,6 +652,48 @@ namespace Mono.ApiTools.Tests
 			Assert.DoesNotContain("IServiceProviderExtensions", allFile);
 		}
 
+		[Theory]
+		[InlineData(".NETPortable", ".NETPortable", new[] { ".NETPortable" })]
+		[InlineData(".NETStandard", ".NETPortable", new[] { ".NETStandard" })]
+		[InlineData(".NETPortable", ".NETStandard", new[] { ".NETPortable" })]
+		[InlineData(".NETStandard", ".NETStandard", new[] { ".NETPortable", ".NETStandard" })]
+		[InlineData(".NETPortable", ".NETPortable", new[] { ".NETPortable", ".NETStandard" })]
+		public void TryMatchFrameworkMatchesBest(string expected, string source, string[] choices)
+		{
+			var src = new NuGetFramework(source);
+			var chs = choices.Select(c => new NuGetFramework(c)).ToArray();
+			var exp = new NuGetFramework(expected);
+
+			var match = NuGetDiff.TryMatchFramework(src, chs);
+
+			Assert.Equal(exp, match);
+		}
+
+		[Theory]
+		[InlineData("net45", "net45", new[] { "net45" })]
+		[InlineData("net462", "net462", new[] { "net45", "net462" })]
+		[InlineData("net461", "net462", new[] { "net461", "net45" })]
+		[InlineData("net461", "net462", new[] { "net45", "net461" })]
+		[InlineData("net45", "net462", new[] { "net45" })]
+		[InlineData("net5.0", "net5.0", new[] { "net5.0" })]
+		[InlineData("net5.0", "net6.0", new[] { "net5.0" })]
+		[InlineData("net5.0-ios", "net5.0-ios", new[] { "net5.0-ios" })]
+		[InlineData("net5.0-ios", "net6.0-ios", new[] { "net5.0-ios" })]
+		[InlineData("net6.0-ios13.4", "net6.0-ios14.0", new[] { "net6.0-ios13.4" })]
+		[InlineData("net6.0-android30.0", "net7.0-android33.0", new[] { "net6.0-ios13.6", "net6.0-android30.0", "net6.0-maccatalyst13.5" })]
+		[InlineData("net6.0-android30.0", "net7.0-android33.0", new[] { "net7.0-ios15.4", "net6.0-maccatalyst13.5", "net6.0-android30.0" })]
+		[InlineData("net6.0-maccatalyst13.5", "net7.0-maccatalyst13.5", new[] { "net7.0-ios15.4", "net6.0-maccatalyst13.5", "net6.0-android30.0" })]
+		public void TryMatchFrameworkMatchesBestParsed(string expected, string source, string[] choices)
+		{
+			var src = NuGetFramework.Parse(source);
+			var chs = choices.Select(c => NuGetFramework.Parse(c)).ToArray();
+			var exp = NuGetFramework.Parse(expected);
+
+			var match = NuGetDiff.TryMatchFramework(src, chs);
+
+			Assert.Equal(exp, match);
+		}
+
 		private static string GenerateTestOutputPath()
 		{
 			var dir = Path.Combine(Path.GetTempPath(), "Mono.ApiTools.NuGetDiff");
