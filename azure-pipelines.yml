@@ -10,7 +10,6 @@ variables:
   PACKAGE_VERSION: $(BASE_VERSION).$(BUILD_NUMBER)
   CONFIGURATION: 'Release'
   BUILD_PRERELEASE: false
-  CAKE_VERSION: 2.2.0
   DOTNET_CORE_VERSION: 6.x
 
 steps:
@@ -21,7 +20,7 @@ steps:
       installationPath: C:\Program Files\dotnet
   - powershell: |
       dotnet --info
-      dotnet tool install -g cake.tool --version $(CAKE_VERSION)
+      dotnet tool restore
   - powershell: dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
   - task: PublishBuildArtifacts@1
     inputs:

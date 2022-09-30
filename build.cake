@@ -17,40 +17,45 @@ var previewVersion  = packageVersion + "-preview." + previewNumber;
 Task("Build")
     .Does(() =>
 {
-    var settings = new MSBuildSettings()
+    var msbuildSettings = new DotNetMSBuildSettings()
         .SetConfiguration(configuration)
-        .SetVerbosity(Verbosity.Minimal)
-        .WithRestore()
         .WithProperty("Version", assemblyVersion)
         .WithProperty("FileVersion", fileVersion)
         .WithProperty("InformationalVersion", infoVersion);
+    var settings = new DotNetBuildSettings
+    {
+        MSBuildSettings = msbuildSettings
+    };
 
-    MSBuild("Mono.ApiTools.NuGetDiff.sln", settings);
+    DotNetBuild("Mono.ApiTools.NuGetDiff.sln", settings);
 });
 
 Task("Pack")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    var settings = new MSBuildSettings()
+    var msbuildSettings = new DotNetMSBuildSettings()
         .SetConfiguration(configuration)
-        .SetVerbosity(Verbosity.Minimal)
         .WithProperty("Version", assemblyVersion)
         .WithProperty("FileVersion", fileVersion)
         .WithProperty("InformationalVersion", infoVersion)
         .WithProperty("PackageOutputPath", MakeAbsolute((DirectoryPath)"./output/").FullPath)
         .WithTarget("Pack");
+    var settings = new DotNetBuildSettings
+    {
+        MSBuildSettings = msbuildSettings
+    };
 
     if (prerelease) {
-        settings.WithProperty("PackageVersion", previewVersion);
+        msbuildSettings.WithProperty("PackageVersion", previewVersion);
 
-        MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
-        MSBuild("api-tools/api-tools.csproj", settings);
+        DotNetBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+        DotNetBuild("api-tools/api-tools.csproj", settings);
     } else {
-        settings.WithProperty("PackageVersion", packageVersion);
+        msbuildSettings.WithProperty("PackageVersion", packageVersion);
 
-        MSBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
-        MSBuild("api-tools/api-tools.csproj", settings);
+        DotNetBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
+        DotNetBuild("api-tools/api-tools.csproj", settings);
     }
 });
 
@@ -60,7 +65,7 @@ Task("Test")
 {
     Information("Running unit tests...");
     DotNetCoreTest("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", new DotNetCoreTestSettings {
-        Logger = "trx"
+        Loggers = new [] { "trx" }
     });
 
     Information("Running app tests...");
