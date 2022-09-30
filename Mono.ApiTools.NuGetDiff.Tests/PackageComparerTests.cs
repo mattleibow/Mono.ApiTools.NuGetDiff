@@ -423,9 +423,6 @@ namespace Mono.ApiTools.Tests
 			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
 			var netFile = File.ReadAllText(Path.Combine(diffDir, "net45", "SkiaSharp.dll.diff.md"));
 
-			// replace the new .NET Standard type
-			netFile = netFile.Replace("System.IAsyncDisposable, System.IDisposable", "System.IDisposable");
-
 			Assert.Equal(netStdFile, netFile);
 		}
 
@@ -440,7 +437,7 @@ namespace Mono.ApiTools.Tests
 			Assert.Equal(2, diff.AddedFrameworks.Length);
 			Assert.Equal(2, diff.RemovedFrameworks.Length);
 			Assert.Equal(7, diff.UnchangedFrameworks.Length);
-			Assert.Single(diff.SimilarFrameworks);
+			Assert.Equal(2, diff.SimilarFrameworks.Count);
 
 			var mac2 = NuGetFramework.Parse("Xamarin.Mac,Version=v2.0");
 			var mac0 = NuGetFramework.Parse("Xamarin.Mac,Version=v0.0");
@@ -479,7 +476,7 @@ namespace Mono.ApiTools.Tests
 			Assert.Equal(2, diff.AddedFrameworks.Length);
 			Assert.Empty(diff.RemovedFrameworks);
 			Assert.Equal(7, diff.UnchangedFrameworks.Length);
-			Assert.Single(diff.SimilarFrameworks);
+			Assert.Equal(2, diff.SimilarFrameworks.Count);
 
 			var netstd = NuGetFramework.Parse(".NETStandard,Version=v1.3");
 			var pcl = NuGetFramework.Parse(".NETPortable,Version=v0.0,Profile=Profile259");
@@ -503,7 +500,7 @@ namespace Mono.ApiTools.Tests
 			Assert.Equal(4, diff.AddedFrameworks.Length);
 			Assert.Equal(2, diff.RemovedFrameworks.Length);
 			Assert.Equal(5, diff.UnchangedFrameworks.Length);
-			Assert.Equal(2, diff.SimilarFrameworks.Count);
+			Assert.Equal(3, diff.SimilarFrameworks.Count);
 
 			var mac2 = NuGetFramework.Parse("Xamarin.Mac,Version=v2.0");
 			var mac0 = NuGetFramework.Parse("Xamarin.Mac,Version=v0.0");
