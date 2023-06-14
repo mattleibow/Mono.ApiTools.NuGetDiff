@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
@@ -31,7 +31,7 @@
 
   <ItemGroup>
     <PackageReference Include="NuGet.Packaging" Version="6.3.0" />
-    <PackageReference Include="NuGet.Protocol" Version="6.3.0" />
+    <PackageReference Include="NuGet.Protocol" Version="6.3.3" />
     <PackageReference Include="Mono.ApiTools" Version="5.14.0.2" />
   </ItemGroup>
 
