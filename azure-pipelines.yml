@@ -15,6 +15,11 @@ variables:
 steps:
   - task: UseDotNet@2
     inputs:
+      version: 3.1.x
+      performMultiLevelLookup: true
+      installationPath: C:\Program Files\dotnet
+  - task: UseDotNet@2
+    inputs:
       version: $(DOTNET_CORE_VERSION)
       performMultiLevelLookup: true
       installationPath: C:\Program Files\dotnet
