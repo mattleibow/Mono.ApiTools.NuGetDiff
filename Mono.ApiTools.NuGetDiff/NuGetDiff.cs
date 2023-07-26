@@ -695,13 +695,20 @@ namespace Mono.ApiTools
 			var compatible = choices
 				.Where(fw => NuGetFrameworkUtility.IsCompatibleWithFallbackCheck(added, fw))
 				.ToArray();
-			if (compatible?.Length > 0)
+			if (compatible.Length == 0)
+			{
+				// fall back to a "similar enough" checker
+				compatible = choices
+					.Where(fw => IsSimilarEnough(added, fw))
+					.ToArray();
+			}
+			if (compatible.Length > 0)
 			{
 				var sorted = compatible
 					.OrderBy(f => f, new FrameworkPrecedenceSorter(DefaultFrameworkNameProvider.Instance, false))
-					.ThenByDescending(f => f, new NuGetFrameworkSorter())
+					.ThenBy(f => f, new NuGetFrameworkSorter())
 					.ToArray();
-				return sorted.FirstOrDefault();
+				return sorted.LastOrDefault();
 			}
 
 			// .NET Standard may have been an upgrade from PCL
@@ -722,6 +729,46 @@ namespace Mono.ApiTools
 			}
 
 			return null;
+		}
+
+		private static bool IsSimilarEnough(NuGetFramework framework, NuGetFramework choice)
+		{
+			var tizen = NuGetFramework.Parse("Tizen");
+			var monoandroid = NuGetFramework.Parse("MonoAndroid");
+			var xamarin_tvOS = NuGetFramework.Parse("Xamarin.TVOS");
+			var xamarin_iOS = NuGetFramework.Parse("Xamarin.iOS");
+			var xamarin_watchOS = NuGetFramework.Parse("Xamarin.WatchOS");
+			var xamarin_Mac = NuGetFramework.Parse("Xamarin.Mac");
+
+			var net_tizen = NuGetFramework.Parse("net5.0-tizen");
+			var net_android = NuGetFramework.Parse("net5.0-android");
+			var net_tvos = NuGetFramework.Parse("net5.0-tvos");
+			var net_ios = NuGetFramework.Parse("net5.0-ios");
+			var net_watchos = NuGetFramework.Parse("net5.0-watchos");
+			var net_macos = NuGetFramework.Parse("net5.0-macos");
+
+			var compatibility = new List<(NuGetFramework, NuGetFramework)>
+			{
+				(tizen, net_tizen),
+				(monoandroid, net_android),
+				(xamarin_tvOS, net_tvos),
+				(xamarin_iOS, net_ios),
+				(xamarin_watchOS, net_watchos),
+				(xamarin_Mac, net_macos),
+			};
+
+			foreach (var compat in compatibility)
+			{
+				if (NuGetFramework.FrameworkNameComparer.Equals(framework, compat.Item1) &&
+					NuGetFrameworkUtility.IsCompatibleWithFallbackCheck(choice, compat.Item2))
+					return true;
+					
+				if (NuGetFrameworkUtility.IsCompatibleWithFallbackCheck(framework, compat.Item2) &&
+					NuGetFramework.FrameworkNameComparer.Equals(choice, compat.Item1))
+					return true;
+			}
+
+			return false;
 		}
 
 		private static string GetExt(string extension, string fallback)
