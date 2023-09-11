@@ -35,6 +35,14 @@ namespace Mono.ApiTools
 
 		public Dictionary<NuGetFramework, (string newPath, string oldPath)[]> SimilarAssemblies { get; set; }
 
+		// file diff
+
+		public List<string> AddedFiles { get; } = new List<string>();
+
+		public List<string> RemovedFiles { get; } = new List<string>();
+
+		public List<NuGetSpecDiff.ElementDiff> MetadataDiff { get; } = new List<NuGetSpecDiff.ElementDiff>();
+
 		public NuGetFramework[] GetAllFrameworks()
 		{
 			return

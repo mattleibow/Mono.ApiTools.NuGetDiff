@@ -74,6 +74,8 @@ namespace Mono.ApiTools
 
 		public bool SaveNuGetXmlDiff { get; set; } = true;
 
+		public bool SaveNuGetStructureDiff { get; set; } = false;
+
 		public string ApiInfoFileExtension { get; set; } = DefaultApiInfoFileExtension;
 
 		public string HtmlDiffFileExtension { get; set; } = DefaultHtmlDiffFileExtension;
@@ -237,6 +239,21 @@ namespace Mono.ApiTools
 						}
 					}
 				}
+			}
+
+			// these results aren't really interesting if the entire package is brand new
+			if (oldReader is not null)
+			{
+				// simple diff of which files *exist* in the NuGet, sizes and file content are not considered
+				var oldFiles = oldReader?.GetFiles() ?? Enumerable.Empty<string>();
+				var newFiles = newReader?.GetFiles() ?? Enumerable.Empty<string>();
+
+				// ignore some internal NuGet files
+				result.AddedFiles.AddRange(newFiles.Except(oldFiles).Where(f => Path.GetExtension(f) != ".psmdcp" && Path.GetExtension(f) != ".p7s"));
+				result.RemovedFiles.AddRange(oldFiles.Except(newFiles).Where(f => Path.GetExtension(f) != ".psmdcp" && Path.GetExtension(f) != ".p7s"));
+
+				// changed NuGet metadata
+				result.MetadataDiff.AddRange(NuGetSpecDiff.Generate(oldReader, newReader, true));
 			}
 
 			return result;
@@ -496,6 +513,51 @@ namespace Mono.ApiTools
 
 				var diffPath = Path.Combine(outputDirectory, $"{(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}.nupkg" + GetExt(XmlDiffFileExtension, DefaultXmlDiffFileExtension));
 				xPackageDiff.Save(diffPath);
+			}
+
+			// save the NuGet structure diff
+			if (SaveNuGetStructureDiff)
+			{
+				var diffPath = Path.Combine(outputDirectory, "nuget-diff.md");
+
+				if (packageDiff.AddedFiles.Any() || packageDiff.RemovedFiles.Any() || packageDiff.MetadataDiff.Any ())
+				{
+					Directory.CreateDirectory(outputDirectory);
+
+					using var file = File.Create(diffPath);
+					using var sw = new StreamWriter(file);
+
+					sw.WriteLine($"## {(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}");
+					sw.WriteLine();
+
+					if (packageDiff.MetadataDiff.Any())
+					{
+						sw.WriteLine("### Changed Metadata");
+						sw.WriteLine();
+						sw.WriteLine("```");
+
+						foreach (var entry in packageDiff.MetadataDiff)
+							sw.WriteLine(entry.ToFormattedString());
+
+						sw.WriteLine("```");
+						sw.WriteLine();
+					}
+
+					if (packageDiff.AddedFiles.Any() || packageDiff.RemovedFiles.Any())
+					{
+						sw.WriteLine("### Added/Removed File(s)");
+						sw.WriteLine();
+						sw.WriteLine("```");
+
+						foreach (var entry in packageDiff.RemovedFiles)
+							sw.WriteLine("- " + entry);
+						foreach (var entry in packageDiff.AddedFiles)
+							sw.WriteLine("+ " + entry);
+
+						sw.WriteLine("```");
+						sw.WriteLine();
+					}
+				}
 			}
 
 			IEnumerable<(string newA, string oldA)> GetAllAssemblies(NuGetFramework framework)
