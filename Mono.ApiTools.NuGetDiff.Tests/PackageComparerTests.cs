@@ -1,6 +1,7 @@
 using Mono.Cecil;
 using NuGet.Frameworks;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 using System;
 using System.Collections.Generic;
@@ -186,6 +187,45 @@ namespace Mono.ApiTools.Tests
 			Assert.NotEmpty(diff.AddedAssemblies);
 			Assert.NotEmpty(diff.RemovedAssemblies);
 			Assert.NotEmpty(diff.UnchangedAssemblies);
+		}
+
+		[Fact]
+		public async Task TestComparePackageStructureAndMetadata()
+		{
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveNuGetStructureDiff = true;
+			comparer.IgnoreResolutionErrors = true;
+
+			// Ensure diff is producing results
+			var diff = await comparer.GenerateAsync(FormsPackageId, FormsV20Number1, FormsV30Number2);
+
+			Assert.NotEmpty(diff.AddedFiles);
+			Assert.NotEmpty(diff.RemovedFiles);
+			Assert.NotEmpty(diff.MetadataDiff);
+
+			// Check output markdown file
+			var oldPackage = new PackageIdentity(FormsPackageId, NuGetVersion.Parse(FormsV20Number1));
+			var newPackage = new PackageIdentity(FormsPackageId, NuGetVersion.Parse(FormsV30Number2));
+			var tempOutput = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(oldPackage, newPackage, tempOutput);
+
+			var results = await File.ReadAllLinesAsync(Path.Combine(tempOutput, "nuget-diff.md"));
+
+			// Spot check a few expected lines
+			Assert.Contains("### Changed Metadata", results);
+			Assert.Contains("- <authors>Xamarin Inc.</authors>", results);
+			Assert.Contains("+ <authors>Microsoft</authors>", results);
+			Assert.Contains("### Added/Removed File(s)", results);
+			Assert.Contains("- lib/portable-win+net45+wp80+win81+wpa81+MonoAndroid10+MonoTouch10+Xamarin.iOS10/Xamarin.Forms.Core.dll", results);
+			Assert.Contains("+ lib/netstandard2.0/Xamarin.Forms.Core.dll", results);
+
+			try
+			{
+				// Try to delete temp dir, but don't error if it fails
+				Directory.Delete(tempOutput, true);
+			} catch { }
 		}
 
 		[Fact]
