@@ -225,7 +225,10 @@ namespace Mono.ApiTools.Tests
 			{
 				// Try to delete temp dir, but don't error if it fails
 				Directory.Delete(tempOutput, true);
-			} catch { }
+			}
+			catch
+			{
+			}
 		}
 
 		[Fact]
@@ -765,16 +768,7 @@ namespace Mono.ApiTools.Tests
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
 				var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-
-				// find out where VS is installed with Xamarin
-				var vswhere = Process.Start(new ProcessStartInfo
-				{
-					FileName = $@"{pf}\Microsoft Visual Studio\Installer\vswhere.exe",
-					Arguments = "-requires Component.Xamarin -latest -property installationPath",
-					RedirectStandardOutput = true
-				});
-				vswhere.WaitForExit();
-				var vs = vswhere.StandardOutput.ReadLine();
+				var vs = FindVisualStudio(pf) ?? FindVisualStudio(pf, true);
 				var referenceAssemblies = $@"{vs}\Common7\IDE\ReferenceAssemblies\Microsoft\Framework";
 
 				paths.Add($@"{referenceAssemblies}\MonoTouch\v1.0");
@@ -787,12 +781,14 @@ namespace Mono.ApiTools.Tests
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.17134.0\Windows.Foundation.UniversalApiContract\6.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.16299.0\Windows.Foundation.UniversalApiContract\5.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.15063.0\Windows.Foundation.UniversalApiContract\5.0.0.0");
+				paths.Add($@"{pf}\Windows Kits\10\References\10.0.22621.0\Windows.Foundation.UniversalApiContract\15.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.UniversalApiContract\3.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.UniversalApiContract\2.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.UniversalApiContract\1.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.17134.0\Windows.Foundation.FoundationContract\6.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.16299.0\Windows.Foundation.FoundationContract\5.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.15063.0\Windows.Foundation.FoundationContract\5.0.0.0");
+				paths.Add($@"{pf}\Windows Kits\10\References\10.0.22621.0\Windows.Foundation.FoundationContract\15.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.FoundationContract\3.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.FoundationContract\2.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.FoundationContract\1.0.0.0");
@@ -805,6 +801,30 @@ namespace Mono.ApiTools.Tests
 			}
 
 			return paths;
+		}
+
+		private static string? FindVisualStudio(string pf, bool preview = false)
+		{
+			// find out where VS is installed with Xamarin
+			var info = new ProcessStartInfo
+			{
+				FileName = $@"{pf}\Microsoft Visual Studio\Installer\vswhere.exe",
+				Arguments = "-requires Component.Xamarin -latest -property installationPath",
+				RedirectStandardOutput = true
+			};
+
+			if (preview)
+			{
+				info.Arguments += " -prerelease";
+			}
+
+			var vswhere = Process.Start(info);
+
+			vswhere.WaitForExit();
+
+			var vs = vswhere.StandardOutput.ReadLine();
+
+			return vs;
 		}
 
 		private async Task AddDependencyAsync(NuGetDiff comparer, string id, string version, string platform)
