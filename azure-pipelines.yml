@@ -1,32 +1,28 @@
 trigger:
-  - master
+  - main
 
 pool:
-  name: 'Hosted Windows 2019 with VS2019'
+  vmImage: 'windows-latest'
 
 variables:
-  BASE_VERSION: 1.3.7
+  BASE_VERSION: 1.4.0
   BUILD_NUMBER: $[counter(format('{0}_{1}', variables['BASE_VERSION'], variables['Build.SourceBranch']), 1)]
   PACKAGE_VERSION: $(BASE_VERSION).$(BUILD_NUMBER)
   CONFIGURATION: 'Release'
   BUILD_PRERELEASE: false
-  DOTNET_CORE_VERSION: 6.x
+  DOTNET_CORE_VERSION: 8.x
 
 steps:
-  - task: UseDotNet@2
-    inputs:
-      version: 3.1.x
-      performMultiLevelLookup: true
-      installationPath: C:\Program Files\dotnet
   - task: UseDotNet@2
     inputs:
       version: $(DOTNET_CORE_VERSION)
       performMultiLevelLookup: true
       installationPath: C:\Program Files\dotnet
-  - powershell: |
+  - pwsh: |
       dotnet --info
       dotnet tool restore
-  - powershell: dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
+  - pwsh: |
+      dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: output
@@ -39,4 +35,4 @@ steps:
     condition: always()
     inputs:
       testResultsFormat: VSTest
-      testResultsFiles: 'Mono.ApiTools.NuGetDiff.Tests\**\*.trx'
+      testResultsFiles: 'Mono.ApiTools.*.Tests\**\*.trx'

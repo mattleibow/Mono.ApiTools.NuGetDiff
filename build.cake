@@ -14,6 +14,15 @@ var infoVersion     = $"{version.Major}.{version.Minor}.{version.Build}.{version
 var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
 var previewVersion  = packageVersion + "-preview." + previewNumber;
 
+Information("Build configuration: {0}", configuration);
+
+Information("Input version number: {0}", version);
+if (prerelease) {
+    Information("Package version number (preview): {0}", previewVersion);
+} else {
+    Information("Package version number (stable): {0}", packageVersion);
+}
+
 Task("Build")
     .Does(() =>
 {
@@ -40,23 +49,14 @@ Task("Pack")
         .WithProperty("FileVersion", fileVersion)
         .WithProperty("InformationalVersion", infoVersion)
         .WithProperty("PackageOutputPath", MakeAbsolute((DirectoryPath)"./output/").FullPath)
+        .WithProperty("PackageVersion", prerelease ? previewVersion : packageVersion)
         .WithTarget("Pack");
     var settings = new DotNetBuildSettings
     {
         MSBuildSettings = msbuildSettings
     };
 
-    if (prerelease) {
-        msbuildSettings.WithProperty("PackageVersion", previewVersion);
-
-        DotNetBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
-        DotNetBuild("api-tools/api-tools.csproj", settings);
-    } else {
-        msbuildSettings.WithProperty("PackageVersion", packageVersion);
-
-        DotNetBuild("Mono.ApiTools.NuGetDiff/Mono.ApiTools.NuGetDiff.csproj", settings);
-        DotNetBuild("api-tools/api-tools.csproj", settings);
-    }
+    DotNetBuild("Mono.ApiTools.NuGetDiff.slnf", settings);
 });
 
 Task("Test")
@@ -64,12 +64,12 @@ Task("Test")
     .Does(() =>
 {
     Information("Running unit tests...");
-    DotNetCoreTest("Mono.ApiTools.NuGetDiff.Tests/Mono.ApiTools.NuGetDiff.Tests.csproj", new DotNetCoreTestSettings {
+    DotNetCoreTest("Mono.ApiTools.NuGetDiff.sln", new DotNetCoreTestSettings {
         Loggers = new [] { "trx" }
     });
 
     Information("Running app tests...");
-    var app = $"api-tools/bin/{configuration}/netcoreapp3.1/api-tools.dll";
+    var app = $"api-tools/bin/{configuration}/net8.0/api-tools.dll";
     var id = "Mono.ApiTools.NuGetDiff";
     var version = prerelease ? previewVersion : packageVersion;
     DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{version}.nupkg --latest --cache=externals --output=diff");

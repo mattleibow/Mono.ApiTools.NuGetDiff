@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "Mono.ApiTools.NuGetDiff.sln",
+    "projects": [
+      "Mono.ApiTools.ApiUsageAnalyzer\\Mono.ApiTools.ApiUsageAnalyzer.csproj",
+      "Mono.ApiTools.NuGetDiff\\Mono.ApiTools.NuGetDiff.csproj",
+      "api-tools\\api-tools.csproj"
+    ]
+  }
+}

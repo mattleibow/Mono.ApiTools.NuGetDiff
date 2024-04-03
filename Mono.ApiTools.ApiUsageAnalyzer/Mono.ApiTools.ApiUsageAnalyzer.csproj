@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;netstandard2.0;net6.0</TargetFrameworks>
-    <AssemblyName>Mono.ApiTools.NuGetDiff</AssemblyName>
+    <AssemblyName>Mono.ApiTools.ApiUsageAnalyzer</AssemblyName>
     <RootNamespace>Mono.ApiTools</RootNamespace>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,12 +10,12 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Mono.ApiTools.NuGetDiff</PackageId>
-    <Title>Mono.ApiTools.NuGetDiff</Title>
+    <PackageId>Mono.ApiTools.ApiUsageAnalyzer</PackageId>
+    <Title>Mono.ApiTools.ApiUsageAnalyzer</Title>
     <!-- <PackageIconUrl>TODO</PackageIconUrl> -->
-    <Summary>A library to help with .NET API development and and NuGet diff-ing.</Summary>
-    <Description>A library to help with .NET API development and and NuGet diff-ing.</Description>
-    <PackageTags>nuget, diff, compare, mono, mono-api-tools, mono-api-info, mono-api-diff, mono-api-html</PackageTags>
+    <Summary>A library to help with .NET API development and assembly analysis.</Summary>
+    <Description>A library to help with .NET API development and assembly analysis.</Description>
+    <PackageTags>nuget, diff, compare, mono, mono-api-tools</PackageTags>
     <Authors>Matthew Leibowitz</Authors>
     <Owners>Matthew Leibowitz</Owners>
     <Copyright>© Matthew Leibowitz.</Copyright>
@@ -32,9 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGet.Packaging" Version="6.6.1" />
-    <PackageReference Include="NuGet.Protocol" Version="6.6.1" />
-    <PackageReference Include="Mono.ApiTools" Version="5.14.0.2" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.5" />
   </ItemGroup>
 
 </Project>
