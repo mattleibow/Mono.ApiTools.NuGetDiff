@@ -21,6 +21,7 @@ namespace Mono.ApiTools
 				"",
 				"Available commands:",
 				new ApiInfoCommand(),
+				new ApiCompatCommand(),
 				new DiffCommand(),
 				new MergeCommand(),
 				new NuGetDiffCommand(),
