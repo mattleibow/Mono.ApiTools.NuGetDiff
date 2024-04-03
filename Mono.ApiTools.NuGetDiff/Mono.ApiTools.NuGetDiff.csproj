@@ -34,12 +34,7 @@
   <ItemGroup>
     <PackageReference Include="NuGet.Packaging" Version="6.9.1" />
     <PackageReference Include="NuGet.Protocol" Version="6.9.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiffFormatted\Mono.ApiTools.ApiDiffFormatted.csproj" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiff\Mono.ApiTools.ApiDiff.csproj" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj" />
+    <PackageReference Include="Mono.ApiTools" Version="5.14.0.2" />
   </ItemGroup>
 
 </Project>
