@@ -14,6 +14,7 @@ variables:
 
 steps:
   - task: UseDotNet@2
+    displayName: Install .NET
     inputs:
       version: $(DOTNET_CORE_VERSION)
       performMultiLevelLookup: true
@@ -21,17 +22,22 @@ steps:
   - pwsh: |
       dotnet --info
       dotnet tool restore
+    displayName: Restore .NET tools
   - pwsh: |
       dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
+    displayName: Build, pack and test
   - task: PublishBuildArtifacts@1
+    displayName: Publish NuGet packages
     inputs:
       pathToPublish: output
       artifactName: nuget
   - task: PublishBuildArtifacts@1
+    displayName: Publish artifacts
     inputs:
       pathToPublish: diff
       artifactName: diff
   - task: PublishTestResults@2
+    displayName: Publish test results
     condition: always()
     inputs:
       testResultsFormat: VSTest
