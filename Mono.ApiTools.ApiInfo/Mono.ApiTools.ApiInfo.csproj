@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;netstandard2.0;net6.0</TargetFrameworks>
-    <AssemblyName>Mono.ApiTools.ApiUsageAnalyzer</AssemblyName>
+    <AssemblyName>Mono.ApiTools.ApiInfo</AssemblyName>
     <RootNamespace>Mono.ApiTools</RootNamespace>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,12 +10,12 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Mono.ApiTools.ApiUsageAnalyzer</PackageId>
-    <Title>Mono.ApiTools.ApiUsageAnalyzer</Title>
+    <PackageId>Mono.ApiTools.ApiInfo</PackageId>
+    <Title>Mono.ApiTools.ApiInfo</Title>
     <!-- <PackageIconUrl>TODO</PackageIconUrl> -->
-    <Summary>A library to help with .NET API development and assembly analysis.</Summary>
-    <Description>A library to help with .NET API development and assembly analysis.</Description>
-    <PackageTags>nuget, diff, compare, mono, mono-api-tools</PackageTags>
+    <Summary>A library to help with .NET API development and API change tracking.</Summary>
+    <Description>A library to help with .NET API development and API change tracking.</Description>
+    <PackageTags>nuget, mono, mono-api-tools, mono-api-info</PackageTags>
     <Authors>Matthew Leibowitz</Authors>
     <Owners>Matthew Leibowitz</Owners>
     <Copyright>© Matthew Leibowitz.</Copyright>
