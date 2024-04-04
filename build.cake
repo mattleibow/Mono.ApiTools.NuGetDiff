@@ -40,7 +40,6 @@ Task("Build")
 });
 
 Task("Pack")
-    .IsDependentOn("Build")
     .Does(() =>
 {
     var msbuildSettings = new DotNetMSBuildSettings()
@@ -76,8 +75,8 @@ Task("Test")
 });
 
 Task("Default")
-    .IsDependentOn("Build")
     .IsDependentOn("Pack")
+    .IsDependentOn("Build")
     .IsDependentOn("Test");
 
 RunTarget(target);

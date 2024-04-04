@@ -6,6 +6,7 @@
 # Repository-specific files
 externals/
 test-output/
+diff/
 
 # User-specific files
 *.suo
