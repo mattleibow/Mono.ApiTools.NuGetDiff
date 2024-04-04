@@ -60,6 +60,7 @@ Task("Pack")
 
 Task("Test")
     .IsDependentOn("Build")
+    .IsDependentOn("Pack")
     .Does(() =>
 {
     Information("Running unit tests...");
