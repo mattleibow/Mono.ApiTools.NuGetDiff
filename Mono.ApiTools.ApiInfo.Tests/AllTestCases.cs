@@ -52,7 +52,7 @@ public class AllTestCases : IDisposable
 		var build = Process.Start(new ProcessStartInfo
 		{
 			FileName = "dotnet",
-			Arguments = "build",
+			Arguments = "build -c Debug",
 			RedirectStandardOutput = true,
 			WorkingDirectory = testCasePath,
 		})!;
