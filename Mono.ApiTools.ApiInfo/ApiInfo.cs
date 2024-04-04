@@ -59,10 +59,15 @@ public static class ApiInfo
 		state.ResolveFiles.AddRange(config.ResolveFiles);
 		state.ResolveStreams.AddRange(config.ResolveStreams);
 
-		Generate(assemblyPaths, assemblyStreams, outStream, state);
+		var writerSettings = config.XmlWriterSettings ?? new XmlWriterSettings
+		{
+			Indent = true,
+		};
+
+		Generate(assemblyPaths, assemblyStreams, outStream, writerSettings, state);
 	}
 
-	internal static void Generate(IEnumerable<string> assemblyFiles, IEnumerable<Stream> assemblyStreams, TextWriter outStream, State state = null)
+	internal static void Generate(IEnumerable<string> assemblyFiles, IEnumerable<Stream> assemblyStreams, TextWriter outStream, XmlWriterSettings writerSettings, State state = null)
 	{
 		if (outStream == null)
 			throw new ArgumentNullException(nameof(outStream));
@@ -118,11 +123,7 @@ public static class ApiInfo
 			}
 		}
 
-		var settings = new XmlWriterSettings
-		{
-			Indent = true,
-		};
-		using (var textWriter = XmlWriter.Create(outStream, settings))
+		using (var textWriter = XmlWriter.Create(outStream, writerSettings))
 		{
 			var writer = new WellFormedXmlWriter(textWriter);
 			writer.WriteStartDocument();

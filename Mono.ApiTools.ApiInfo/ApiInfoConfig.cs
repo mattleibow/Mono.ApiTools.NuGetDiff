@@ -7,6 +7,8 @@
 // Copyright (C) 2003-2008 Novell, Inc (http://www.novell.com)
 //
 
+using System.Xml;
+
 namespace Mono.ApiTools;
 
 public class ApiInfoConfig
@@ -21,9 +23,11 @@ public class ApiInfoConfig
 
 	public bool IgnoreInheritedInterfaces { get; set; } = false;
 
-	public List<string> SearchDirectories { get; set; } = new List<string>();
+	public IList<string> SearchDirectories { get; set; } = new List<string>();
 
-	public List<string> ResolveFiles { get; set; } = new List<string>();
+	public IList<string> ResolveFiles { get; set; } = new List<string>();
 
-	public List<Stream> ResolveStreams { get; set; } = new List<Stream>();
+	public IList<Stream> ResolveStreams { get; set; } = new List<Stream>();
+
+	public XmlWriterSettings XmlWriterSettings { get; set; } = new XmlWriterSettings { Indent = true };
 }

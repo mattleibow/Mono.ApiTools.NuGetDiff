@@ -108,10 +108,10 @@ abstract class MemberData : BaseData
 
 			writer.WriteStartElement("generic-parameter-constraints");
 
-			foreach (TypeReference constraint in constraints)
+			foreach (GenericParameterConstraint constraint in constraints)
 			{
 				writer.WriteStartElement("generic-parameter-constraint");
-				writer.WriteAttributeString("name", Utils.CleanupTypeName(constraint));
+				writer.WriteAttributeString("name", Utils.CleanupTypeName(constraint.ConstraintType));
 				writer.WriteEndElement(); // generic-parameter-constraint
 			}
 
