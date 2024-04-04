@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;netstandard2.0;net6.0</TargetFrameworks>
-    <AssemblyName>Mono.ApiTools.NuGetDiff</AssemblyName>
+    <AssemblyName>Mono.ApiTools.ApiInfo</AssemblyName>
     <RootNamespace>Mono.ApiTools</RootNamespace>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,12 +10,12 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Mono.ApiTools.NuGetDiff</PackageId>
-    <Title>Mono.ApiTools.NuGetDiff</Title>
+    <PackageId>Mono.ApiTools.ApiInfo</PackageId>
+    <Title>Mono.ApiTools.ApiInfo</Title>
     <!-- <PackageIconUrl>TODO</PackageIconUrl> -->
-    <Summary>A library to help with .NET API development and and NuGet diff-ing.</Summary>
-    <Description>A library to help with .NET API development and and NuGet diff-ing.</Description>
-    <PackageTags>nuget, diff, compare, mono, mono-api-tools, mono-api-info, mono-api-diff, mono-api-html</PackageTags>
+    <Summary>A library to help with .NET API development and API change tracking.</Summary>
+    <Description>A library to help with .NET API development and API change tracking.</Description>
+    <PackageTags>nuget, mono, mono-api-tools, mono-api-info</PackageTags>
     <Authors>Matthew Leibowitz</Authors>
     <Owners>Matthew Leibowitz</Owners>
     <Copyright>© Matthew Leibowitz.</Copyright>
@@ -27,19 +27,8 @@
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="NuGet.Packaging" Version="6.9.1" />
-    <PackageReference Include="NuGet.Protocol" Version="6.9.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiffFormatted\Mono.ApiTools.ApiDiffFormatted.csproj" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiDiff\Mono.ApiTools.ApiDiff.csproj" />
-    <ProjectReference Include="..\Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.5" />
   </ItemGroup>
 
 </Project>

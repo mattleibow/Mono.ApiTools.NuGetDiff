@@ -1,9 +1,6 @@
 trigger:
   - main
 
-pool:
-  vmImage: 'windows-latest'
-
 variables:
   BASE_VERSION: 1.4.0
   BUILD_NUMBER: $[counter(format('{0}_{1}', variables['BASE_VERSION'], variables['Build.SourceBranch']), 1)]
@@ -12,33 +9,76 @@ variables:
   BUILD_PRERELEASE: false
   DOTNET_CORE_VERSION: 8.x
 
-steps:
-  - task: UseDotNet@2
-    displayName: Install .NET
-    inputs:
-      version: $(DOTNET_CORE_VERSION)
-      performMultiLevelLookup: true
-      installationPath: C:\Program Files\dotnet
-  - pwsh: |
-      dotnet --info
-      dotnet tool restore
-    displayName: Restore .NET tools
-  - pwsh: |
-      dotnet cake --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
-    displayName: Build, pack and test
-  - task: PublishBuildArtifacts@1
-    displayName: Publish NuGet packages
-    inputs:
-      pathToPublish: output
-      artifactName: nuget
-  - task: PublishBuildArtifacts@1
-    displayName: Publish artifacts
-    inputs:
-      pathToPublish: diff
-      artifactName: diff
-  - task: PublishTestResults@2
-    displayName: Publish test results
-    condition: always()
-    inputs:
-      testResultsFormat: VSTest
-      testResultsFiles: 'Mono.ApiTools.*.Tests\**\*.trx'
+jobs:
+  - job: pack
+    displayName: Pack
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      - task: UseDotNet@2
+        displayName: Install .NET
+        inputs:
+          version: $(DOTNET_CORE_VERSION)
+          performMultiLevelLookup: true
+          installationPath: C:\Program Files\dotnet
+      - pwsh: |
+          dotnet --info
+          dotnet tool restore
+        displayName: Restore .NET tools
+      - pwsh: |
+          dotnet cake --target=Pack --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
+        displayName: Pack
+      - task: PublishBuildArtifacts@1
+        displayName: Publish NuGet packages
+        inputs:
+          pathToPublish: output
+          artifactName: nuget
+
+  - job: build
+    displayName: Build everything
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      - task: UseDotNet@2
+        displayName: Install .NET
+        inputs:
+          version: $(DOTNET_CORE_VERSION)
+          performMultiLevelLookup: true
+          installationPath: C:\Program Files\dotnet
+      - pwsh: |
+          dotnet --info
+          dotnet tool restore
+        displayName: Restore .NET tools
+      - pwsh: |
+          dotnet cake --target=Build --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
+        displayName: Build
+
+  - job: test
+    displayName: Test
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      - task: UseDotNet@2
+        displayName: Install .NET
+        inputs:
+          version: $(DOTNET_CORE_VERSION)
+          performMultiLevelLookup: true
+          installationPath: C:\Program Files\dotnet
+      - pwsh: |
+          dotnet --info
+          dotnet tool restore
+        displayName: Restore .NET tools
+      - pwsh: |
+          dotnet cake --target=Test --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)"
+        displayName: Run tests
+      - task: PublishBuildArtifacts@1
+        displayName: Publish artifacts
+        inputs:
+          pathToPublish: diff
+          artifactName: tests-diff
+      - task: PublishTestResults@2
+        displayName: Publish test results
+        condition: always()
+        inputs:
+          testResultsFormat: VSTest
+          testResultsFiles: 'Mono.ApiTools.*.Tests\**\*.trx'

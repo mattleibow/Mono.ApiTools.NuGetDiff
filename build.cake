@@ -40,7 +40,6 @@ Task("Build")
 });
 
 Task("Pack")
-    .IsDependentOn("Build")
     .Does(() =>
 {
     var msbuildSettings = new DotNetMSBuildSettings()
@@ -61,10 +60,11 @@ Task("Pack")
 
 Task("Test")
     .IsDependentOn("Build")
+    .IsDependentOn("Pack")
     .Does(() =>
 {
     Information("Running unit tests...");
-    DotNetCoreTest("Mono.ApiTools.NuGetDiff.sln", new DotNetCoreTestSettings {
+    DotNetTest("Mono.ApiTools.NuGetDiff.sln", new DotNetTestSettings {
         Loggers = new [] { "trx" }
     });
 
@@ -72,12 +72,12 @@ Task("Test")
     var app = $"api-tools/bin/{configuration}/net8.0/api-tools.dll";
     var id = "Mono.ApiTools.NuGetDiff";
     var version = prerelease ? previewVersion : packageVersion;
-    DotNetCoreExecute(app, $"nuget-diff ./output/{id}.{version}.nupkg --latest --cache=externals --output=diff");
+    DotNetExecute(app, $"nuget-diff ./output/{id}.{version}.nupkg --latest --cache=externals --output=diff");
 });
 
 Task("Default")
-    .IsDependentOn("Build")
     .IsDependentOn("Pack")
+    .IsDependentOn("Build")
     .IsDependentOn("Test");
 
 RunTarget(target);
