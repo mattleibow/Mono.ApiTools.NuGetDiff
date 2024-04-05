@@ -2,156 +2,104 @@
 
 namespace ApiUsageAnalyzer;
 
-public class ApiAnalyzer
+public static class ApiAnalyzer
 {
-    public MissingSymbols GetMissingSymbols(InputAssembly inputAssembly, InputAssembly dependencyAssembly)
-    {
-        List<string> missingTypes = [];
-        List<string> missingMembers = [];
+	class State
+	{
+		public string? DependencyAssemblyName { get; set; }
 
-        using var module = ReadModule(inputAssembly);
+		public List<string> MissingTypes { get; set; } = [];
 
-        using var dependency = ReadModule(dependencyAssembly);
+		public List<string> MissingMembers { get; set; } = [];
+	}
 
-        ProcessTypes(missingTypes, module, dependency);
-        ProcessMembers(missingMembers, module, dependency);
+	public static MissingSymbols GetMissingSymbols(InputAssembly inputAssembly, InputAssembly dependencyAssembly)
+	{
+		using var module = ReadModule(inputAssembly);
+		using var dependency = ReadModule(dependencyAssembly);
 
-        return new MissingSymbols(missingTypes, missingMembers);
-    }
+		var state = new State
+		{
+			DependencyAssemblyName = dependency.GetAssemblyName()
+		};
 
-    public MissingSymbols GetMissingMembers(InputAssembly inputAssembly, InputAssembly dependencyAssembly)
-    {
-        List<string> missingMembers = [];
+		ProcessTypes(module, dependency, state);
+		ProcessMembers(module, dependency, state);
 
-        using var module = ReadModule(inputAssembly);
+		return new MissingSymbols(state.MissingTypes, state.MissingMembers);
+	}
 
-        using var dependency = ReadModule(dependencyAssembly);
+	private static ModuleDefinition ReadModule(InputAssembly inputAssembly)
+	{
+		var resolver = new AssemblyResolver();
+		if (inputAssembly.SearchPaths is not null)
+		{
+			foreach (var path in inputAssembly.SearchPaths)
+			{
+				resolver.AddSearchDirectory(path);
+			}
+		}
 
-        ProcessMembers(missingMembers, module, dependency);
+		var assembly = resolver.ResolveStream(inputAssembly.Open());
 
-        return new MissingSymbols([], missingMembers);
-    }
+		return assembly.MainModule;
+	}
 
-    public MissingSymbols GetMissingTypes(InputAssembly inputAssembly, InputAssembly dependencyAssembly)
-    {
-        List<string> missingTypes = [];
+	private static void ProcessTypes(ModuleDefinition module, ModuleDefinition dependency, State state)
+	{
+		var typeRefs = module.GetTypeReferences();
 
-        using var module = ReadModule(inputAssembly);
+		foreach (var typeRef in typeRefs)
+		{
+			// check to make sure the types we are looking at are the ones that are in the dependency
+			var name = typeRef.GetAssemblyName();
+			if (name != state.DependencyAssemblyName)
+				continue;
 
-        using var dependency = ReadModule(dependencyAssembly);
+			// check to see if the type is in the dependency
+			var clonedDependency = typeRef.Clone(dependency);
+			var resolvedDependency = dependency.MetadataResolver.Resolve(clonedDependency);
+			if (resolvedDependency is not null)
+				continue;
 
-        ProcessTypes(missingTypes, module, dependency);
+			// if the type is not in the dependency, add it to the list of missing types
+			state.MissingTypes.Add(typeRef.FullName);
+		}
+	}
 
-        return new MissingSymbols(missingTypes, []);
-    }
+	private static void ProcessMembers(ModuleDefinition module, ModuleDefinition dependency, State state)
+	{
+		var memberRefs = module.GetMemberReferences();
 
-    private ModuleDefinition ReadModule(InputAssembly inputAssembly)
-    {
-        var parameters = new ReaderParameters
-        {
-            AssemblyResolver = new Resolver(inputAssembly.SearchPaths),
-        };
+		foreach (var memberRef in memberRefs)
+		{
+			// check to make sure the members we are looking at are the ones that are in the dependency
+			var memberAssemblyName = memberRef.GetAssemblyName();
+			if (memberAssemblyName != state.DependencyAssemblyName)
+				continue;
 
-        return ModuleDefinition.ReadModule(inputAssembly.FileName, parameters);
-    }
-
-    private void ProcessTypes(List<string> missingTypes, ModuleDefinition module, ModuleDefinition dependency)
-    {
-        var typeRefs = module.GetTypeReferences();
-
-        var dependencyAssemblyName = GetAssemblyName(dependency);
-
-        foreach (var typeRef in typeRefs)
-        {
-            var name = GetSymbolAssemblyName(typeRef);
-            if (name != dependencyAssemblyName)
-                continue;
-
-            var clonedDependency = CloneType(typeRef, dependency);
-            var resolvedDependency = dependency.MetadataResolver.Resolve(clonedDependency);
-            if (resolvedDependency is not null)
-                continue;
-
-            missingTypes.Add(typeRef.FullName);
-        }
-    }
-
-    private void ProcessMembers(List<string> missingMembers, ModuleDefinition module, ModuleDefinition dependency)
-    {
-        var memberRefs = module.GetMemberReferences();
-
-        var dependencyAssemblyName = GetAssemblyName(dependency);
-        foreach (var memberRef in memberRefs)
-        {
-            var memberAssemblyName = GetSymbolAssemblyName(memberRef);
-            if (memberAssemblyName != dependencyAssemblyName)
-                continue;
-
-            if (memberRef is MethodReference methodRef)
-            {
-                var resolved = dependency.MetadataResolver.Resolve(methodRef);
-                if (resolved is null)
-                {
-                    missingMembers.Add(methodRef.FullName);
-                }
-            }
-            else if (memberRef is FieldReference fieldRef)
-            {
-                var resolved = dependency.MetadataResolver.Resolve(fieldRef);
-                if (resolved is null)
-                {
-                    missingMembers.Add(fieldRef.FullName);
-                }
-            }
-        }
-    }
-
-    private static TypeReference CloneType(TypeReference type, ModuleDefinition module)
-    {
-        var newType = new TypeReference(type.Namespace, type.Name, module, module.Assembly.Name);
-        if (type.DeclaringType is not null)
-        {
-            newType.DeclaringType = CloneType(type.DeclaringType, module);
-        }
-        return newType;
-    }
-
-    private static string GetSymbolAssemblyName(MemberReference reference) =>
-        GetSymbolAssemblyName(reference.DeclaringType);
-
-    private static string GetSymbolAssemblyName(TypeReference reference)
-    {
-        if (reference is TypeDefinition typeDefinition)
-            return GetAssemblyName(typeDefinition.Module);
-
-        var scope = reference.Scope;
-        var name = scope.Name;
-
-        return name;
-    }
-
-    private static string GetAssemblyName(ModuleDefinition module) =>
-        module.Assembly.Name.Name;
-
-    class Resolver : DefaultAssemblyResolver
-    {
-        public Resolver(IEnumerable<string>? searchPaths)
-            : this()
-        {
-            if (searchPaths is not null)
-            {
-                foreach (var path in searchPaths)
-                {
-                    if (path is not null)
-                        AddSearchDirectory(path);
-                }
-            }
-        }
-
-        public Resolver()
-        {
-            RemoveSearchDirectory(".");
-            RemoveSearchDirectory("bin");
-        }
-    }
+			if (memberRef is MethodReference methodRef)
+			{
+				// if the member is a method, check to see if the method is in the dependency
+				var clonedRef = methodRef.Clone(dependency);
+				var resolved = dependency.MetadataResolver.Resolve(clonedRef);
+				if (resolved is null)
+				{
+					// if the method is not in the dependency, add it to the list of missing members
+					state.MissingMembers.Add(methodRef.FullName);
+				}
+			}
+			else if (memberRef is FieldReference fieldRef)
+			{
+				// if the member is a field, check to see if the field is in the dependency
+				var clonedRef = fieldRef.Clone(dependency);
+				var resolved = dependency.MetadataResolver.Resolve(clonedRef);
+				if (resolved is null)
+				{
+					// if the field is not in the dependency, add it to the list of missing members
+					state.MissingMembers.Add(fieldRef.FullName);
+				}
+			}
+		}
+	}
 }

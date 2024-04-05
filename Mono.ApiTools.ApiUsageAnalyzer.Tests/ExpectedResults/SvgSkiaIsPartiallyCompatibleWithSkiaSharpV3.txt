@@ -3,6 +3,7 @@ SkiaSharp.SKImageFilter/CropRect
 SkiaSharp.SKCropRectFlags
 
 Missing Members:
+System.Void SkiaSharp.SKImageFilter/CropRect::.ctor(SkiaSharp.SKRect,SkiaSharp.SKCropRectFlags)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateArithmetic(System.Single,System.Single,System.Single,System.Single,System.Boolean,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateBlendMode(SkiaSharp.SKBlendMode,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateBlur(System.Single,System.Single,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
