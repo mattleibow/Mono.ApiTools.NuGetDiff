@@ -1,5 +1,4 @@
-﻿using ApiUsageAnalyzer;
-using Mono.Options;
+﻿using Mono.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -112,7 +111,7 @@ namespace Mono.ApiTools
 		private static MemoryStream GenerateOutput(InputAssembly mainAssembly, InputAssembly dependencyAssembly)
 		{
 			// run the actual analysis
-			var missing = ApiAnalyzer.GetMissingSymbols(mainAssembly, dependencyAssembly);
+			var missing = ApiCompat.GetMissingSymbols(mainAssembly, dependencyAssembly);
 
 			var outputStream = new MemoryStream();
 

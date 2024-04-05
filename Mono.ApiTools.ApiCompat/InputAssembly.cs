@@ -1,4 +1,4 @@
-﻿namespace ApiUsageAnalyzer;
+﻿namespace Mono.ApiTools;
 
 public abstract class InputAssembly
 {

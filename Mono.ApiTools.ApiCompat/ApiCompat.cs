@@ -1,8 +1,8 @@
 ﻿using Mono.Cecil;
 
-namespace ApiUsageAnalyzer;
+namespace Mono.ApiTools;
 
-public static class ApiAnalyzer
+public static class ApiCompat
 {
 	class State
 	{

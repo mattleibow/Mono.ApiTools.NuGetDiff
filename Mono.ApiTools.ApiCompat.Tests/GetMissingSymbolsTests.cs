@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Xunit.Abstractions;
 
-namespace ApiUsageAnalyzer.Tests;
+namespace Mono.ApiTools.Tests;
 
 public class GetMissingSymbolsTests : BaseUnitTest
 {
@@ -16,7 +16,7 @@ public class GetMissingSymbolsTests : BaseUnitTest
 	[Fact]
 	public void ClassLibraryV1IsCompatibleWithClassLibraryV1()
 	{
-		var result = ApiAnalyzer.GetMissingSymbols(
+		var result = ApiCompat.GetMissingSymbols(
 			new FileInputAssembly(LibraryBuiltAgainstV1)
 			{
 				SearchPaths = [Path.GetDirectoryName(LibraryBuiltAgainstV1)!]
@@ -32,7 +32,7 @@ public class GetMissingSymbolsTests : BaseUnitTest
 	[Fact]
 	public void ClassLibraryV2IsPartiallyCompatibleWithClassLibraryV1()
 	{
-		var result = ApiAnalyzer.GetMissingSymbols(
+		var result = ApiCompat.GetMissingSymbols(
 			new FileInputAssembly(LibraryBuiltAgainstV1)
 			{
 				SearchPaths = [Path.GetDirectoryName(LibraryBuiltAgainstV1)!]
@@ -50,7 +50,7 @@ public class GetMissingSymbolsTests : BaseUnitTest
 	{
 		var v2 = Path.GetDirectoryName(SkiaSharpV2Downloader)!;
 
-		var result = ApiAnalyzer.GetMissingSymbols(
+		var result = ApiCompat.GetMissingSymbols(
 			new FileInputAssembly(Path.Combine(v2, "Svg.Skia.dll"))
 			{
 				SearchPaths = [v2]
@@ -69,7 +69,7 @@ public class GetMissingSymbolsTests : BaseUnitTest
 		var v2 = Path.GetDirectoryName(SkiaSharpV2Downloader)!;
 		var v3 = Path.GetDirectoryName(SkiaSharpV3Downloader)!;
 
-		var result = ApiAnalyzer.GetMissingSymbols(
+		var result = ApiCompat.GetMissingSymbols(
 			new FileInputAssembly(Path.Combine(v2, "Svg.Skia.dll"))
 			{
 				SearchPaths = [v2]

@@ -21,9 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibraryBuiltAgainstV1", "Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkiaSharpV3Downloader", "TestAssemblies\SkiaSharpV3Downloader\SkiaSharpV3Downloader.csproj", "{9730CE46-896A-4BEA-9404-58010E67CE7E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.ApiUsageAnalyzer", "Mono.ApiTools.ApiUsageAnalyzer\Mono.ApiTools.ApiUsageAnalyzer.csproj", "{0948920E-8CB6-402C-A08A-FD037271F55A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.ApiCompat", "Mono.ApiTools.ApiCompat\Mono.ApiTools.ApiCompat.csproj", "{0948920E-8CB6-402C-A08A-FD037271F55A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.ApiUsageAnalyzer.Tests", "Mono.ApiTools.ApiUsageAnalyzer.Tests\Mono.ApiTools.ApiUsageAnalyzer.Tests.csproj", "{F53DB267-FD43-4D36-AC48-0BBA5E543B1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.ApiCompat.Tests", "Mono.ApiTools.ApiCompat.Tests\Mono.ApiTools.ApiCompat.Tests.csproj", "{F53DB267-FD43-4D36-AC48-0BBA5E543B1D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.ApiTools.ApiInfo", "Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj", "{E064D6FF-E5AA-4D8B-A487-0BD079A0672B}"
 EndProject

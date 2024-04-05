@@ -1,6 +1,6 @@
 ﻿using Mono.Cecil;
 
-namespace ApiUsageAnalyzer;
+namespace Mono.ApiTools;
 
 class AssemblyResolver : DefaultAssemblyResolver
 {

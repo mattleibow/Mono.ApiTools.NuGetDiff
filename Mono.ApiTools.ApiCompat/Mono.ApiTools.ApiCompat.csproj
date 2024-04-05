@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;netstandard2.0;net6.0</TargetFrameworks>
-    <AssemblyName>Mono.ApiTools.ApiUsageAnalyzer</AssemblyName>
+    <AssemblyName>Mono.ApiTools.ApiCompat</AssemblyName>
     <RootNamespace>Mono.ApiTools</RootNamespace>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Mono.ApiTools.ApiUsageAnalyzer</PackageId>
-    <Title>Mono.ApiTools.ApiUsageAnalyzer</Title>
+    <PackageId>Mono.ApiTools.ApiCompat</PackageId>
+    <Title>Mono.ApiTools.ApiCompat</Title>
     <!-- <PackageIconUrl>TODO</PackageIconUrl> -->
     <Summary>A library to help with .NET API development and assembly analysis.</Summary>
     <Description>A library to help with .NET API development and assembly analysis.</Description>

@@ -36,7 +36,7 @@ Task("Build")
         MSBuildSettings = msbuildSettings
     };
 
-    DotNetBuild("Mono.ApiTools.NuGetDiff.sln", settings);
+    DotNetBuild("Mono.ApiTools.sln", settings);
 });
 
 Task("Pack")
@@ -55,7 +55,7 @@ Task("Pack")
         MSBuildSettings = msbuildSettings
     };
 
-    DotNetBuild("Mono.ApiTools.NuGetDiff.slnf", settings);
+    DotNetBuild("Mono.ApiTools.slnf", settings);
 });
 
 Task("Test")
@@ -64,7 +64,7 @@ Task("Test")
     .Does(() =>
 {
     Information("Running unit tests...");
-    DotNetTest("Mono.ApiTools.NuGetDiff.sln", new DotNetTestSettings {
+    DotNetTest("Mono.ApiTools.sln", new DotNetTestSettings {
         Loggers = new [] { "trx" }
     });
 
