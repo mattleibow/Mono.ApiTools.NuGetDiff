@@ -54,8 +54,7 @@ Determine how compatible assemblies are.
 
 Options:
   -s, --search=VALUE         A search path directory for the main assembly
-      --dependency-search=VALUE
-                             A search path directory for the dependency
+      --dep-search=VALUE     A search path directory for the dependency
   -o, --output=VALUE         The output file path
   -?, -h, --help             Show this message and exit
 ```
