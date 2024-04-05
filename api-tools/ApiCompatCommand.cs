@@ -26,7 +26,7 @@ namespace Mono.ApiTools
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "s|search=", "A search path directory for the main assembly", v => SearchPaths.Add(v) },
-			{ "dependency-search=", "A search path directory for the dependency", v => DependencySearchPaths.Add(v) },
+			{ "dep-search=", "A search path directory for the dependency", v => DependencySearchPaths.Add(v) },
 			{ "o|output=", "The output file path", v => OutputPath = v },
 		};
 
