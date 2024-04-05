@@ -11,7 +11,7 @@ namespace Mono.ApiTools
 	public class ApiCompatCommand : BaseCommand
 	{
 		public ApiCompatCommand()
-			: base("api-compat", "ASSEMBLY1 ASSEMBLY2", "Determine how compatible assemblies are.")
+			: base("compat", "ASSEMBLY1 ASSEMBLY2", "Determine how compatible assemblies are.")
 		{
 		}
 
