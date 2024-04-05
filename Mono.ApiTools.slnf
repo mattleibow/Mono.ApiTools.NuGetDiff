@@ -1,11 +1,11 @@
 {
   "solution": {
-    "path": "Mono.ApiTools.NuGetDiff.sln",
+    "path": "Mono.ApiTools.sln",
     "projects": [
       "Mono.ApiTools.ApiDiff\\Mono.ApiTools.ApiDiff.csproj",
       "Mono.ApiTools.ApiDiffFormatted\\Mono.ApiTools.ApiDiffFormatted.csproj",
       "Mono.ApiTools.ApiInfo\\Mono.ApiTools.ApiInfo.csproj",
-      "Mono.ApiTools.ApiUsageAnalyzer\\Mono.ApiTools.ApiUsageAnalyzer.csproj",
+      "Mono.ApiTools.ApiCompat\\Mono.ApiTools.ApiCompat.csproj",
       "Mono.ApiTools.NuGetDiff\\Mono.ApiTools.NuGetDiff.csproj",
       "api-tools\\api-tools.csproj"
     ]

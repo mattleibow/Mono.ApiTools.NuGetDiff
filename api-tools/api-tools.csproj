@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mono.ApiTools.ApiUsageAnalyzer\Mono.ApiTools.ApiUsageAnalyzer.csproj" />
+    <ProjectReference Include="..\Mono.ApiTools.ApiCompat\Mono.ApiTools.ApiCompat.csproj" />
     <ProjectReference Include="..\Mono.ApiTools.NuGetDiff\Mono.ApiTools.NuGetDiff.csproj" />
   </ItemGroup>
 

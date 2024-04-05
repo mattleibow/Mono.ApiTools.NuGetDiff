@@ -1,5 +1,4 @@
-﻿using ApiUsageAnalyzer;
-using Mono.Options;
+﻿using Mono.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,12 +15,18 @@ namespace Mono.ApiTools
 		{
 		}
 
+		public string OutputPath { get; set; }
+
 		public List<string> Assemblies { get; set; } = new List<string>();
 
-		public string OutputPath { get; set; }
+		public List<string> SearchPaths { get; set; } = new List<string>();
+
+		public List<string> DependencySearchPaths { get; set; } = new List<string>();
 
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
+			{ "s|search=", "A search path directory for the main assembly", v => SearchPaths.Add(v) },
+			{ "dependency-search=", "A search path directory for the dependency", v => DependencySearchPaths.Add(v) },
 			{ "o|output=", "The output file path", v => OutputPath = v },
 		};
 
@@ -65,20 +70,14 @@ namespace Mono.ApiTools
 			if (Program.Verbose)
 				Console.WriteLine($"Running analysis on '{Assemblies[0]}' against '{Assemblies[1]}'...");
 
-			var mainAssembly = new InputAssembly(Assemblies[0])
+			var mainAssembly = new FileInputAssembly(Assemblies[0])
 			{
-				SearchPaths =
-				{
-					Path.GetDirectoryName(Assemblies[0])
-				}
+				SearchPaths = SearchPaths
 			};
 
-			var dependencyAssembly = new InputAssembly(Assemblies[1])
+			var dependencyAssembly = new FileInputAssembly(Assemblies[1])
 			{
-				SearchPaths =
-				{
-					Path.GetDirectoryName(Assemblies[1])
-				}
+				SearchPaths = DependencySearchPaths
 			};
 
 			ProcessAsync(mainAssembly, dependencyAssembly).Wait();
@@ -106,15 +105,13 @@ namespace Mono.ApiTools
 
 			// we are done
 			if (Program.Verbose)
-				Console.WriteLine($"Analysis complete of '{mainAssembly.FileName}'.");
+				Console.WriteLine($"Analysis complete.");
 		}
 
 		private static MemoryStream GenerateOutput(InputAssembly mainAssembly, InputAssembly dependencyAssembly)
 		{
-			var analyzer = new ApiAnalyzer();
-
 			// run the actual analysis
-			var missing = analyzer.GetMissingSymbols(mainAssembly, dependencyAssembly);
+			var missing = ApiCompat.GetMissingSymbols(mainAssembly, dependencyAssembly);
 
 			var outputStream = new MemoryStream();
 

@@ -1,4 +1,4 @@
-﻿namespace ApiUsageAnalyzer.Tests;
+﻿namespace Mono.ApiTools.Tests;
 
 public class BaseUnitTest
 {

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Mono.ApiTools.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -22,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mono.ApiTools.ApiUsageAnalyzer\Mono.ApiTools.ApiUsageAnalyzer.csproj" />
+    <ProjectReference Include="..\Mono.ApiTools.ApiCompat\Mono.ApiTools.ApiCompat.csproj" />
   </ItemGroup>
 
   <ItemGroup>
