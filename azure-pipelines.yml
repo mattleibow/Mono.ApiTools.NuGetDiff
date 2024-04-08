@@ -2,7 +2,7 @@ trigger:
   - main
 
 variables:
-  BASE_VERSION: 1.4.1
+  BASE_VERSION: 1.4.0
   BUILD_NUMBER: $[counter(format('{0}_{1}', variables['BASE_VERSION'], variables['Build.SourceBranch']), 1)]
   PACKAGE_VERSION: $(BASE_VERSION).$(BUILD_NUMBER)
   CONFIGURATION: 'Release'
