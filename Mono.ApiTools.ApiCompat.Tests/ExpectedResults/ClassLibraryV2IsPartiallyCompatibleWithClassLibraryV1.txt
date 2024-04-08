@@ -1,5 +1,6 @@
 Mising Types:
 ClassLibrary.ClassV1Only
+ClassLibrary.StructV1Only
 ClassLibrary.TypeV1Only
 ClassLibrary.ClassV1AndV2/NestedClassV1Only
 
