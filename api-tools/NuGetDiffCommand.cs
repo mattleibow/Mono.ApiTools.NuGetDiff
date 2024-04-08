@@ -54,6 +54,7 @@ namespace Mono.ApiTools
 			{ "source=", "The NuGet URL source", v => SourceUrl = v },
 			{ "version=", "The version of the package to compare", v => Version = v },
 			{ "compare-nuget-structure", "Compare NuGet metadata and file contents", v => CompareNuGetStructure = true },
+			{ "include-structure", "Compare NuGet metadata and file contents", v => CompareNuGetStructure = true },
 		};
 
 		protected override bool OnValidateArguments(IEnumerable<string> extras)
