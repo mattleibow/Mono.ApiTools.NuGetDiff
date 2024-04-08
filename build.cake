@@ -13,15 +13,12 @@ var fileVersion     = $"{version.Major}.{version.Minor}.{version.Build}.0";
 var infoVersion     = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
 var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
 var previewVersion  = packageVersion + "-preview." + previewNumber;
+var finalBuildNumber = prerelease ? previewVersion : packageVersion;
 
 Information("Build configuration: {0}", configuration);
-
 Information("Input version number: {0}", version);
-if (prerelease) {
-    Information("Package version number (preview): {0}", previewVersion);
-} else {
-    Information("Package version number (stable): {0}", packageVersion);
-}
+Information("Package version number: {0}", finalBuildNumber);
+Information($"##vso[build.updatebuildnumber]{finalBuildNumber}");
 
 Task("Build")
     .Does(() =>
