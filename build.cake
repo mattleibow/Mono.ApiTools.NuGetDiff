@@ -13,7 +13,7 @@ var assemblyVersion = $"{version.Major}.0.0.0";
 var fileVersion     = $"{version.Major}.{version.Minor}.{version.Build}.0";
 var infoVersion     = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
 var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
-var previewlabel = string.IsNullOrEmpty(pullrequest) ? "preview" : $"pr.{pullrequest}";
+var previewlabel = pullrequest > 0 ? $"pr.{pullrequest}" : "preview";
 var previewVersion  = $"{packageVersion}-{previewlabel}.{previewNumber}";
 var finalBuildNumber = prerelease ? previewVersion : packageVersion;
 
