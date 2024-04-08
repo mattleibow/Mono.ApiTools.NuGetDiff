@@ -26,7 +26,7 @@ jobs:
           dotnet tool restore
         displayName: Restore .NET tools
       - pwsh: |
-          dotnet cake --target=Pack --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$(System.PullRequest.PullRequestNumber)"
+          dotnet cake --target=Pack --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$env:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
         displayName: Pack
       - task: PublishBuildArtifacts@1
         displayName: Publish NuGet packages
@@ -50,7 +50,7 @@ jobs:
           dotnet tool restore
         displayName: Restore .NET tools
       - pwsh: |
-          dotnet cake --target=Build --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$(System.PullRequest.PullRequestNumber)"
+          dotnet cake --target=Build --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$env:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
         displayName: Build
 
   - job: test
@@ -69,7 +69,7 @@ jobs:
           dotnet tool restore
         displayName: Restore .NET tools
       - pwsh: |
-          dotnet cake --target=Test --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$(System.PullRequest.PullRequestNumber)"
+          dotnet cake --target=Test --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$env:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
         displayName: Run tests
       - task: PublishBuildArtifacts@1
         displayName: Publish artifacts
