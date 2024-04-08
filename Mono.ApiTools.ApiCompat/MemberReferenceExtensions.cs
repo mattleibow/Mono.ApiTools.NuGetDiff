@@ -154,6 +154,22 @@ internal static class MemberReferenceExtensions
 			return newType;
 		}
 
+		if (type.IsByReference)
+		{
+			var byRef = (ByReferenceType)type;
+			var newType = new ByReferenceType(
+				byRef.ElementType.Clone(module));
+			return newType;
+		}
+
+		if (type.IsPointer)
+		{
+			var pointer = (PointerType)type;
+			var newType = new PointerType(
+				pointer.ElementType.Clone(module));
+			return newType;
+		}
+
 		return type.Clone(module);
 	}
 

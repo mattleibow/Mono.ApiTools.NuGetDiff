@@ -1,9 +1,8 @@
 Mising Types:
-SkiaSharp.SKImageFilter/CropRect
 SkiaSharp.SKCropRectFlags
+SkiaSharp.SKImageFilter/CropRect
 
 Missing Members:
-System.Void SkiaSharp.SKImageFilter/CropRect::.ctor(SkiaSharp.SKRect,SkiaSharp.SKCropRectFlags)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateArithmetic(System.Single,System.Single,System.Single,System.Single,System.Boolean,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateBlendMode(SkiaSharp.SKBlendMode,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateBlur(System.Single,System.Single,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
@@ -22,5 +21,6 @@ SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreatePointLitDiffuse(SkiaSharp
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreatePointLitSpecular(SkiaSharp.SKPoint3,SkiaSharp.SKColor,System.Single,System.Single,System.Single,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateSpotLitDiffuse(SkiaSharp.SKPoint3,SkiaSharp.SKPoint3,System.Single,System.Single,SkiaSharp.SKColor,System.Single,System.Single,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
 SkiaSharp.SKImageFilter SkiaSharp.SKImageFilter::CreateSpotLitSpecular(SkiaSharp.SKPoint3,SkiaSharp.SKPoint3,System.Single,System.Single,SkiaSharp.SKColor,System.Single,System.Single,System.Single,SkiaSharp.SKImageFilter,SkiaSharp.SKImageFilter/CropRect)
-System.Void SkiaSharp.SKPath::Transform(SkiaSharp.SKMatrix)
 System.Void SkiaSharp.SKCanvas::SetMatrix(SkiaSharp.SKMatrix)
+System.Void SkiaSharp.SKImageFilter/CropRect::.ctor(SkiaSharp.SKRect,SkiaSharp.SKCropRectFlags)
+System.Void SkiaSharp.SKPath::Transform(SkiaSharp.SKMatrix)

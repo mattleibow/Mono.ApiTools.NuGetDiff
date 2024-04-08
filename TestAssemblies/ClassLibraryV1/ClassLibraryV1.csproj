@@ -8,6 +8,7 @@
     <AssemblyName>ClassLibrary</AssemblyName>
     <Version>1.0.0.0</Version>
     <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
 </Project>
