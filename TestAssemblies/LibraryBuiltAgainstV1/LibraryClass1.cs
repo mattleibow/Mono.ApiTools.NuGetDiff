@@ -16,8 +16,10 @@ public class LibraryClass1
 		c2.Method();
 
 		var s = new StructV1AndV2();
+		s.MethodV1AndV2();
 
 		var s2 = new StructV1Only();
+		s2.Method();
 	}
 
 	public Type Type = typeof(TypeV1Only);

@@ -64,7 +64,14 @@ Task("Test")
     .Does(() =>
 {
     Information("Running unit tests...");
-    DotNetTest("Mono.ApiTools.sln", new DotNetTestSettings {
+    var msbuildSettings = new DotNetMSBuildSettings()
+        .SetConfiguration(configuration)
+        .WithProperty("Version", assemblyVersion)
+        .WithProperty("FileVersion", fileVersion)
+        .WithProperty("InformationalVersion", infoVersion);
+    DotNetTest("Mono.ApiTools.sln", new DotNetTestSettings
+    {
+        MSBuildSettings = msbuildSettings,
         Loggers = new [] { "trx" }
     });
 

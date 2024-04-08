@@ -111,7 +111,9 @@ public class GetMissingSymbolsTests : BaseUnitTest
 		}
 		else
 		{
-			foreach (var type in result.Types)
+			var types = result.Types.ToList();
+			types.Sort();
+			foreach (var type in types)
 			{
 				sb.AppendLine(type);
 			}
@@ -125,7 +127,9 @@ public class GetMissingSymbolsTests : BaseUnitTest
 		}
 		else
 		{
-			foreach (var member in result.Members)
+			var members = result.Members.ToList();
+			members.Sort();
+			foreach (var member in members)
 			{
 				sb.AppendLine(member);
 			}

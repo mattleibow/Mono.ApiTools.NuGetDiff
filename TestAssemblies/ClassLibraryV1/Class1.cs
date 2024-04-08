@@ -24,10 +24,20 @@ public class ClassV1AndV2
 
 	public class NestedClassV1AndV2
 	{
+		public void MethodV1AndV2()
+		{
+		}
+
+		public void MethodV1Only()
+		{
+		}
 	}
 
 	public class NestedClassV1Only
 	{
+		public void Method()
+		{
+		}
 	}
 
 	public class UnusedNestedClassV1Only
@@ -36,10 +46,20 @@ public class ClassV1AndV2
 
 	public struct NestedStructV1AndV2
 	{
+		public void MethodV1AndV2()
+		{
+		}
+
+		public void MethodV1Only()
+		{
+		}
 	}
 
 	public struct NestedStructV1Only
 	{
+		public void Method()
+		{
+		}
 	}
 }
 
@@ -56,8 +76,18 @@ public class TypeV1Only
 
 public struct StructV1AndV2
 {
+	public void MethodV1AndV2()
+	{
+	}
+
+	public void MethodV1Only()
+	{
+	}
 }
 
 public struct StructV1Only
 {
+	public void Method()
+	{
+	}
 }
