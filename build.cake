@@ -1,7 +1,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var pullrequest = Argument("pullrequest", "");
-var prerelease = Argument("prerelease", true) || !string.IsNullOrEmpty(pullrequest);
+var pullrequest = Argument("pullrequest", 0);
+var prerelease = Argument("prerelease", true) || pullrequest > 0;
 
 // a bit of logic to create the version number:
 //  - input                     = 1.2.3.4

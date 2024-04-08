@@ -8,6 +8,7 @@ variables:
   CONFIGURATION: 'Release'
   BUILD_PRERELEASE: true
   DOTNET_CORE_VERSION: 8.x
+  PR_NUMBER: $[coalesce(variables['System.PullRequest.PullRequestNumber'], '0')]
 
 jobs:
   - job: pack
@@ -26,7 +27,7 @@ jobs:
           dotnet tool restore
         displayName: Restore .NET tools
       - pwsh: |
-          dotnet cake --target=Pack --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$env:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
+          dotnet cake --target=Pack --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$(PR_NUMBER)"
         displayName: Pack
       - task: PublishBuildArtifacts@1
         displayName: Publish NuGet packages
@@ -50,7 +51,7 @@ jobs:
           dotnet tool restore
         displayName: Restore .NET tools
       - pwsh: |
-          dotnet cake --target=Build --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$env:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
+          dotnet cake --target=Build --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$(PR_NUMBER)"
         displayName: Build
 
   - job: test
@@ -69,7 +70,7 @@ jobs:
           dotnet tool restore
         displayName: Restore .NET tools
       - pwsh: |
-          dotnet cake --target=Test --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$env:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
+          dotnet cake --target=Test --configuration="$(CONFIGURATION)" --packageVersion="$(PACKAGE_VERSION)" --prerelease="$(BUILD_PRERELEASE)" --pullrequest="$(PR_NUMBER)"
         displayName: Run tests
       - task: PublishBuildArtifacts@1
         displayName: Publish artifacts
