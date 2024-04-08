@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using Mono.Options;
 
 namespace Mono.ApiTools
 {
 	public abstract class BaseCommand : Command
 	{
+		protected const int DefaultSaveBufferSize = 1024;
+
+		protected static readonly Encoding UTF8NoBOM = new UTF8Encoding(false, true);
+
 		protected BaseCommand(string name, string help)
 			: this(name, null, help)
 		{

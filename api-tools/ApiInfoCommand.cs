@@ -9,10 +9,6 @@ namespace Mono.ApiTools
 {
 	public class ApiInfoCommand : BaseCommand
 	{
-		private const int DefaultSaveBufferSize = 1024;
-
-		private static readonly Encoding UTF8NoBOM = new UTF8Encoding(false, true);
-
 		public ApiInfoCommand()
 			: base("api-info", "ASSEMBLY ...", "Generate API info XML for assemblies.")
 		{
@@ -84,8 +80,18 @@ namespace Mono.ApiTools
 						path = assembly + ".api-info.xml";
 				}
 
+				// write the file
 				using var output = File.Create(path);
 				info.CopyTo(output);
+
+				if (string.IsNullOrWhiteSpace(OutputPath))
+				{
+					// write to console out
+					info.Position = 0;
+					using var md = new StreamReader(info);
+					var contents = md.ReadToEnd();
+					Console.Out.WriteLine(contents);
+				}
 			}
 
 			return true;

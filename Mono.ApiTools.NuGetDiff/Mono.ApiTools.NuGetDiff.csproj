@@ -1,10 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net472;netstandard2.0;net6.0</TargetFrameworks>
     <AssemblyName>Mono.ApiTools.NuGetDiff</AssemblyName>
     <RootNamespace>Mono.ApiTools</RootNamespace>
     <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,9 +32,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGet.Packaging" Version="4.6.0" />
-    <PackageReference Include="NuGet.Protocol" Version="4.6.0" />
-    <PackageReference Include="Mono.ApiTools" Version="5.14.0.2" />
+    <PackageReference Include="NuGet.Packaging" Version="6.9.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.9.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mono.ApiTools.ApiDiffFormatted\Mono.ApiTools.ApiDiffFormatted.csproj" />
+    <ProjectReference Include="..\Mono.ApiTools.ApiDiff\Mono.ApiTools.ApiDiff.csproj" />
+    <ProjectReference Include="..\Mono.ApiTools.ApiInfo\Mono.ApiTools.ApiInfo.csproj" />
   </ItemGroup>
 
 </Project>

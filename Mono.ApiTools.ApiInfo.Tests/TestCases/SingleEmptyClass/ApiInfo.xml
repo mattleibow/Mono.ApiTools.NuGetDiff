@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<assemblies>
+  <assembly name="Project" version="0.0.0.0">
+    <attributes>
+      <attribute name="System.Diagnostics.DebuggableAttribute">
+        <properties>
+          <property name="DebuggingFlags" value="EnableEditAndContinue, IgnoreSymbolStoreSequencePoints, DisableOptimizations, Default" />
+        </properties>
+      </attribute>
+      <attribute name="System.Runtime.CompilerServices.CompilationRelaxationsAttribute">
+        <properties>
+          <property name="CompilationRelaxations" value="8" />
+        </properties>
+      </attribute>
+      <attribute name="System.Runtime.CompilerServices.RuntimeCompatibilityAttribute">
+        <properties>
+          <property name="WrapNonExceptionThrows" value="True" />
+        </properties>
+      </attribute>
+      <attribute name="System.Runtime.Versioning.TargetFrameworkAttribute">
+        <properties>
+          <property name="FrameworkDisplayName" value=".NET 8.0" />
+          <property name="FrameworkName" value=".NETCoreApp,Version=v8.0" />
+        </properties>
+      </attribute>
+    </attributes>
+    <namespaces>
+      <namespace name="MyNamespace">
+        <classes>
+          <class name="MyClass" type="class" base="System.Object" charset="Ansi" layout="Auto">
+            <constructors>
+              <constructor name=".ctor()" attrib="6278">
+                <parameters />
+              </constructor>
+            </constructors>
+          </class>
+        </classes>
+      </namespace>
+    </namespaces>
+  </assembly>
+</assemblies>

@@ -74,6 +74,8 @@ namespace Mono.ApiTools
 
 		public bool SaveNuGetXmlDiff { get; set; } = true;
 
+		public bool SaveNuGetStructureDiff { get; set; } = false;
+
 		public string ApiInfoFileExtension { get; set; } = DefaultApiInfoFileExtension;
 
 		public string HtmlDiffFileExtension { get; set; } = DefaultHtmlDiffFileExtension;
@@ -239,39 +241,22 @@ namespace Mono.ApiTools
 				}
 			}
 
-			return result;
-
-			NuGetFramework TryMatchFramework(NuGetFramework added, NuGetFramework[] choices)
+			// these results aren't really interesting if the entire package is brand new
+			if (oldReader is not null)
 			{
-				// there may be a case where the spelling has changed
-				var exact = choices.FirstOrDefault(fw => fw == added);
-				if (exact != null)
-					return exact;
+				// simple diff of which files *exist* in the NuGet, sizes and file content are not considered
+				var oldFiles = oldReader?.GetFiles() ?? Enumerable.Empty<string>();
+				var newFiles = newReader?.GetFiles() ?? Enumerable.Empty<string>();
 
-				// match frameworks that have just changed version
-				var name = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, added));
-				if (name != null)
-					return name;
+				// ignore some internal NuGet files
+				result.AddedFiles.AddRange(newFiles.Except(oldFiles).Where(f => Path.GetExtension(f) != ".psmdcp" && Path.GetExtension(f) != ".p7s"));
+				result.RemovedFiles.AddRange(oldFiles.Except(newFiles).Where(f => Path.GetExtension(f) != ".psmdcp" && Path.GetExtension(f) != ".p7s"));
 
-				// .NET Standard may have been an upgrade from PCL
-				var netstd = new NuGetFramework(".NETStandard");
-				var pcl = new NuGetFramework(".NETPortable");
-				if (NuGetFramework.FrameworkNameComparer.Equals(added, netstd))
-				{
-					var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, pcl));
-					if (pclnetstd != null)
-						return pclnetstd;
-				}
-				// the horror that a .NET Standard was devolved into a PCL
-				if (NuGetFramework.FrameworkNameComparer.Equals(added, pcl))
-				{
-					var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, netstd));
-					if (pclnetstd != null)
-						return pclnetstd;
-				}
-
-				return null;
+				// changed NuGet metadata
+				result.MetadataDiff.AddRange(NuGetSpecDiff.Generate(oldReader, newReader, true));
 			}
+
+			return result;
 
 			(string path, string name)[] GetFrameworkAssemblies(NuGetFramework fw, IEnumerable<FrameworkSpecificGroup> items)
 			{
@@ -530,6 +515,51 @@ namespace Mono.ApiTools
 				xPackageDiff.Save(diffPath);
 			}
 
+			// save the NuGet structure diff
+			if (SaveNuGetStructureDiff)
+			{
+				var diffPath = Path.Combine(outputDirectory, "nuget-diff.md");
+
+				if (packageDiff.AddedFiles.Any() || packageDiff.RemovedFiles.Any() || packageDiff.MetadataDiff.Any ())
+				{
+					Directory.CreateDirectory(outputDirectory);
+
+					using var file = File.Create(diffPath);
+					using var sw = new StreamWriter(file);
+
+					sw.WriteLine($"## {(packageDiff.OldIdentity ?? packageDiff.NewIdentity).Id}");
+					sw.WriteLine();
+
+					if (packageDiff.MetadataDiff.Any())
+					{
+						sw.WriteLine("### Changed Metadata");
+						sw.WriteLine();
+						sw.WriteLine("```");
+
+						foreach (var entry in packageDiff.MetadataDiff)
+							sw.WriteLine(entry.ToFormattedString());
+
+						sw.WriteLine("```");
+						sw.WriteLine();
+					}
+
+					if (packageDiff.AddedFiles.Any() || packageDiff.RemovedFiles.Any())
+					{
+						sw.WriteLine("### Added/Removed File(s)");
+						sw.WriteLine();
+						sw.WriteLine("```");
+
+						foreach (var entry in packageDiff.RemovedFiles)
+							sw.WriteLine("- " + entry);
+						foreach (var entry in packageDiff.AddedFiles)
+							sw.WriteLine("+ " + entry);
+
+						sw.WriteLine("```");
+						sw.WriteLine();
+					}
+				}
+			}
+
 			IEnumerable<(string newA, string oldA)> GetAllAssemblies(NuGetFramework framework)
 			{
 				if (packageDiff.UnchangedAssemblies.TryGetValue(framework, out var unchangedAssemblies))
@@ -715,6 +745,93 @@ namespace Mono.ApiTools
 
 
 		// Private members
+
+		internal static NuGetFramework TryMatchFramework(NuGetFramework added, NuGetFramework[] choices)
+		{
+			// there may be a case where the spelling has changed
+			var exact = choices.FirstOrDefault(fw => fw == added);
+			if (exact != null)
+				return exact;
+
+			// match frameworks
+			var compatible = choices
+				.Where(fw => NuGetFrameworkUtility.IsCompatibleWithFallbackCheck(added, fw))
+				.ToArray();
+			if (compatible.Length == 0)
+			{
+				// fall back to a "similar enough" checker
+				compatible = choices
+					.Where(fw => IsSimilarEnough(added, fw))
+					.ToArray();
+			}
+			if (compatible.Length > 0)
+			{
+				var sorted = compatible
+					.OrderBy(f => f, new FrameworkPrecedenceSorter(DefaultFrameworkNameProvider.Instance, false))
+					.ThenBy(f => f, new NuGetFrameworkSorter())
+					.ToArray();
+				return sorted.LastOrDefault();
+			}
+
+			// .NET Standard may have been an upgrade from PCL
+			var netstd = new NuGetFramework(".NETStandard");
+			var pcl = new NuGetFramework(".NETPortable");
+			if (NuGetFramework.FrameworkNameComparer.Equals(added, netstd))
+			{
+				var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, pcl));
+				if (pclnetstd != null)
+					return pclnetstd;
+			}
+			// the horror that a .NET Standard was devolved into a PCL
+			if (NuGetFramework.FrameworkNameComparer.Equals(added, pcl))
+			{
+				var pclnetstd = choices.FirstOrDefault(fw => NuGetFramework.FrameworkNameComparer.Equals(fw, netstd));
+				if (pclnetstd != null)
+					return pclnetstd;
+			}
+
+			return null;
+		}
+
+		private static bool IsSimilarEnough(NuGetFramework framework, NuGetFramework choice)
+		{
+			var tizen = NuGetFramework.Parse("Tizen");
+			var monoandroid = NuGetFramework.Parse("MonoAndroid");
+			var xamarin_tvOS = NuGetFramework.Parse("Xamarin.TVOS");
+			var xamarin_iOS = NuGetFramework.Parse("Xamarin.iOS");
+			var xamarin_watchOS = NuGetFramework.Parse("Xamarin.WatchOS");
+			var xamarin_Mac = NuGetFramework.Parse("Xamarin.Mac");
+
+			var net_tizen = NuGetFramework.Parse("net5.0-tizen");
+			var net_android = NuGetFramework.Parse("net5.0-android");
+			var net_tvos = NuGetFramework.Parse("net5.0-tvos");
+			var net_ios = NuGetFramework.Parse("net5.0-ios");
+			var net_watchos = NuGetFramework.Parse("net5.0-watchos");
+			var net_macos = NuGetFramework.Parse("net5.0-macos");
+
+			var compatibility = new List<(NuGetFramework, NuGetFramework)>
+			{
+				(tizen, net_tizen),
+				(monoandroid, net_android),
+				(xamarin_tvOS, net_tvos),
+				(xamarin_iOS, net_ios),
+				(xamarin_watchOS, net_watchos),
+				(xamarin_Mac, net_macos),
+			};
+
+			foreach (var compat in compatibility)
+			{
+				if (NuGetFramework.FrameworkNameComparer.Equals(framework, compat.Item1) &&
+					NuGetFrameworkUtility.IsCompatibleWithFallbackCheck(choice, compat.Item2))
+					return true;
+					
+				if (NuGetFrameworkUtility.IsCompatibleWithFallbackCheck(framework, compat.Item2) &&
+					NuGetFramework.FrameworkNameComparer.Equals(choice, compat.Item1))
+					return true;
+			}
+
+			return false;
+		}
 
 		private static string GetExt(string extension, string fallback)
 		{

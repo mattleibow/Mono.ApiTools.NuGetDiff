@@ -13,10 +13,6 @@ namespace Mono.ApiTools
 {
 	public class DiffCommand : BaseCommand
 	{
-		private const int DefaultSaveBufferSize = 1024;
-
-		private static readonly Encoding UTF8NoBOM = new UTF8Encoding(false, true);
-
 		public DiffCommand()
 			: base("diff", "ASSEMBLY1 ASSEMBLY2", "Compare two assemblies.")
 		{

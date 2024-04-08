@@ -1,6 +1,7 @@
 using Mono.Cecil;
 using NuGet.Frameworks;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 using System;
 using System.Collections.Generic;
@@ -186,6 +187,48 @@ namespace Mono.ApiTools.Tests
 			Assert.NotEmpty(diff.AddedAssemblies);
 			Assert.NotEmpty(diff.RemovedAssemblies);
 			Assert.NotEmpty(diff.UnchangedAssemblies);
+		}
+
+		[Fact]
+		public async Task TestComparePackageStructureAndMetadata()
+		{
+			var comparer = new NuGetDiff();
+			comparer.SearchPaths.AddRange(searchPaths);
+			comparer.SaveNuGetStructureDiff = true;
+			comparer.IgnoreResolutionErrors = true;
+
+			// Ensure diff is producing results
+			var diff = await comparer.GenerateAsync(FormsPackageId, FormsV20Number1, FormsV30Number2);
+
+			Assert.NotEmpty(diff.AddedFiles);
+			Assert.NotEmpty(diff.RemovedFiles);
+			Assert.NotEmpty(diff.MetadataDiff);
+
+			// Check output markdown file
+			var oldPackage = new PackageIdentity(FormsPackageId, NuGetVersion.Parse(FormsV20Number1));
+			var newPackage = new PackageIdentity(FormsPackageId, NuGetVersion.Parse(FormsV30Number2));
+			var tempOutput = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+			await comparer.SaveCompleteDiffToDirectoryAsync(oldPackage, newPackage, tempOutput);
+
+			var results = await File.ReadAllLinesAsync(Path.Combine(tempOutput, "nuget-diff.md"));
+
+			// Spot check a few expected lines
+			Assert.Contains("### Changed Metadata", results);
+			Assert.Contains("- <authors>Xamarin Inc.</authors>", results);
+			Assert.Contains("+ <authors>Microsoft</authors>", results);
+			Assert.Contains("### Added/Removed File(s)", results);
+			Assert.Contains("- lib/portable-win+net45+wp80+win81+wpa81+MonoAndroid10+MonoTouch10+Xamarin.iOS10/Xamarin.Forms.Core.dll", results);
+			Assert.Contains("+ lib/netstandard2.0/Xamarin.Forms.Core.dll", results);
+
+			try
+			{
+				// Try to delete temp dir, but don't error if it fails
+				Directory.Delete(tempOutput, true);
+			}
+			catch
+			{
+			}
 		}
 
 		[Fact]
@@ -423,9 +466,6 @@ namespace Mono.ApiTools.Tests
 			var netStdFile = File.ReadAllText(Path.Combine(diffDir, "netstandard1.3", "SkiaSharp.dll.diff.md"));
 			var netFile = File.ReadAllText(Path.Combine(diffDir, "net45", "SkiaSharp.dll.diff.md"));
 
-			// replace the new .NET Standard type
-			netFile = netFile.Replace("System.IAsyncDisposable, System.IDisposable", "System.IDisposable");
-
 			Assert.Equal(netStdFile, netFile);
 		}
 
@@ -440,7 +480,7 @@ namespace Mono.ApiTools.Tests
 			Assert.Equal(2, diff.AddedFrameworks.Length);
 			Assert.Equal(2, diff.RemovedFrameworks.Length);
 			Assert.Equal(7, diff.UnchangedFrameworks.Length);
-			Assert.Single(diff.SimilarFrameworks);
+			Assert.Equal(2, diff.SimilarFrameworks.Count);
 
 			var mac2 = NuGetFramework.Parse("Xamarin.Mac,Version=v2.0");
 			var mac0 = NuGetFramework.Parse("Xamarin.Mac,Version=v0.0");
@@ -479,7 +519,7 @@ namespace Mono.ApiTools.Tests
 			Assert.Equal(2, diff.AddedFrameworks.Length);
 			Assert.Empty(diff.RemovedFrameworks);
 			Assert.Equal(7, diff.UnchangedFrameworks.Length);
-			Assert.Single(diff.SimilarFrameworks);
+			Assert.Equal(2, diff.SimilarFrameworks.Count);
 
 			var netstd = NuGetFramework.Parse(".NETStandard,Version=v1.3");
 			var pcl = NuGetFramework.Parse(".NETPortable,Version=v0.0,Profile=Profile259");
@@ -503,7 +543,7 @@ namespace Mono.ApiTools.Tests
 			Assert.Equal(4, diff.AddedFrameworks.Length);
 			Assert.Equal(2, diff.RemovedFrameworks.Length);
 			Assert.Equal(5, diff.UnchangedFrameworks.Length);
-			Assert.Equal(2, diff.SimilarFrameworks.Count);
+			Assert.Equal(3, diff.SimilarFrameworks.Count);
 
 			var mac2 = NuGetFramework.Parse("Xamarin.Mac,Version=v2.0");
 			var mac0 = NuGetFramework.Parse("Xamarin.Mac,Version=v0.0");
@@ -652,6 +692,67 @@ namespace Mono.ApiTools.Tests
 			Assert.DoesNotContain("IServiceProviderExtensions", allFile);
 		}
 
+		[Theory]
+		[InlineData(".NETPortable", ".NETPortable", new[] { ".NETPortable" })]
+		[InlineData(".NETStandard", ".NETPortable", new[] { ".NETStandard" })]
+		[InlineData(".NETPortable", ".NETStandard", new[] { ".NETPortable" })]
+		[InlineData(".NETStandard", ".NETStandard", new[] { ".NETPortable", ".NETStandard" })]
+		[InlineData(".NETPortable", ".NETPortable", new[] { ".NETPortable", ".NETStandard" })]
+		public void TryMatchFrameworkMatchesBest(string expected, string source, string[] choices)
+		{
+			var src = new NuGetFramework(source);
+			var chs = choices.Select(c => new NuGetFramework(c)).ToArray();
+			var exp = new NuGetFramework(expected);
+
+			var match = NuGetDiff.TryMatchFramework(src, chs);
+
+			Assert.Equal(exp, match);
+		}
+
+		[Theory]
+		[InlineData("net45", "net45", new[] { "net45" })]
+		[InlineData("net462", "net462", new[] { "net45", "net462" })]
+		[InlineData("net461", "net462", new[] { "net461", "net45" })]
+		[InlineData("net461", "net462", new[] { "net45", "net461" })]
+		[InlineData("net45", "net462", new[] { "net45" })]
+		[InlineData("net5.0", "net5.0", new[] { "net5.0" })]
+		[InlineData("net5.0", "net6.0", new[] { "net5.0" })]
+		[InlineData("net5.0-ios", "net5.0-ios", new[] { "net5.0-ios" })]
+		[InlineData("net5.0-ios", "net6.0-ios", new[] { "net5.0-ios" })]
+		[InlineData("net6.0-ios13.4", "net6.0-ios14.0", new[] { "net6.0-ios13.4" })]
+		[InlineData("net6.0-android30.0", "net7.0-android33.0", new[] { "net6.0-ios13.6", "net6.0-android30.0", "net6.0-maccatalyst13.5" })]
+		[InlineData("net6.0-android30.0", "net7.0-android33.0", new[] { "net7.0-ios15.4", "net6.0-maccatalyst13.5", "net6.0-android30.0" })]
+		[InlineData("net6.0-maccatalyst13.5", "net7.0-maccatalyst13.5", new[] { "net7.0-ios15.4", "net6.0-maccatalyst13.5", "net6.0-android30.0" })]
+		[InlineData("net6.0-android30.0", "net7.0-android33.0", new[] { "net6.0-android30.0", "monoandroid1.0" })]
+		[InlineData("net6.0-android32.0", "net7.0-android33.0", new[] { "net6.0-android30.0", "net6.0-android31.0", "net6.0-android32.0", "monoandroid1.0" })]
+		[InlineData("net6.0-android32.0", "net7.0-android33.0", new[] { "net6.0-android31.0", "net6.0-android30.0", "monoandroid1.0", "net6.0-android32.0" })]
+		[InlineData("net6.0-android32.0", "net7.0-android33.0", new[] { "monoandroid1.0", "net6.0-android32.0", "net6.0-android30.0", "net6.0-android31.0" })]
+		[InlineData("monoandroid1.0", "net6.0-android31.0", new[] { "monoandroid1.0" })]
+		[InlineData("net6.0-android31.0", "net6.0-android32.0", new[] { "net6.0-android31.0", "monoandroid1.0" })]
+		[InlineData("net6.0-android31.0", "monoandroid1.0", new[] { "net6.0-android31.0" })]
+		[InlineData("Xamarin.tvOS1.0", "net7.0-tvos15.0", new[] { "Xamarin.tvOS1.0" })]
+		[InlineData("net6.0-tvos14.0", "net7.0-tvos15.0", new[] { "net6.0-tvos14.0", "Xamarin.tvOS1.0" })]
+		[InlineData("net6.0-tvos14.0", "Xamarin.tvOS1.0", new[] { "net6.0-tvos14.0" })]
+		[InlineData("net6.0-tvos14.0", "net7.0-tvos15.0", new[] { "net6.0-tvos13.0", "net6.0-tvos13.1", "net6.0-tvos14.0", "Xamarin.tvOS1.0" })]
+		[InlineData("net6.0-tvos14.0", "net7.0-tvos15.0", new[] { "net6.0-tvos13.1", "net6.0-tvos13.0", "Xamarin.tvOS1.0", "net6.0-tvos14.0" })]
+		[InlineData("net6.0-tvos14.0", "net7.0-tvos15.0", new[] { "Xamarin.tvOS1.0", "net6.0-tvos14.0", "net6.0-tvos13.0", "net6.0-tvos13.1" })]
+		[InlineData("Xamarin.ios1.0", "net7.0-ios15.0", new[] { "Xamarin.ios1.0" })]
+		[InlineData("net6.0-ios14.0", "net7.0-ios15.0", new[] { "net6.0-ios14.0", "Xamarin.ios1.0" })]
+		[InlineData("net6.0-ios14.0", "Xamarin.ios1.0", new[] { "net6.0-ios14.0" })]
+		[InlineData("net6.0-ios14.0", "net7.0-ios15.0", new[] { "net6.0-ios13.0", "net6.0-ios13.1", "net6.0-ios14.0", "Xamarin.ios1.0" })]
+		[InlineData("net6.0-ios14.0", "net7.0-ios15.0", new[] { "net6.0-ios13.1", "net6.0-ios13.0", "Xamarin.ios1.0", "net6.0-ios14.0" })]
+		[InlineData("net6.0-ios14.0", "net7.0-ios15.0", new[] { "Xamarin.ios1.0", "net6.0-ios14.0", "net6.0-ios13.0", "net6.0-ios13.1" })]
+		public void TryMatchFrameworkMatchesBestParsed(string expected, string source, string[] choices)
+		{
+			var src = NuGetFramework.Parse(source);
+			var chs = choices.Select(c => NuGetFramework.Parse(c)).ToArray();
+			var exp = NuGetFramework.Parse(expected);
+
+			var match = NuGetDiff.TryMatchFramework(src, chs);
+
+			Assert.Equal(exp, match);
+		}
+
 		private static string GenerateTestOutputPath()
 		{
 			var dir = Path.Combine(Path.GetTempPath(), "Mono.ApiTools.NuGetDiff");
@@ -667,16 +768,7 @@ namespace Mono.ApiTools.Tests
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
 				var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-
-				// find out where VS is installed with Xamarin
-				var vswhere = Process.Start(new ProcessStartInfo
-				{
-					FileName = $@"{pf}\Microsoft Visual Studio\Installer\vswhere.exe",
-					Arguments = "-requires Component.Xamarin -latest -property installationPath",
-					RedirectStandardOutput = true
-				});
-				vswhere.WaitForExit();
-				var vs = vswhere.StandardOutput.ReadLine();
+				var vs = FindVisualStudio(pf) ?? FindVisualStudio(pf, true);
 				var referenceAssemblies = $@"{vs}\Common7\IDE\ReferenceAssemblies\Microsoft\Framework";
 
 				paths.Add($@"{referenceAssemblies}\MonoTouch\v1.0");
@@ -689,12 +781,14 @@ namespace Mono.ApiTools.Tests
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.17134.0\Windows.Foundation.UniversalApiContract\6.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.16299.0\Windows.Foundation.UniversalApiContract\5.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.15063.0\Windows.Foundation.UniversalApiContract\5.0.0.0");
+				paths.Add($@"{pf}\Windows Kits\10\References\10.0.22621.0\Windows.Foundation.UniversalApiContract\15.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.UniversalApiContract\3.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.UniversalApiContract\2.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.UniversalApiContract\1.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.17134.0\Windows.Foundation.FoundationContract\6.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.16299.0\Windows.Foundation.FoundationContract\5.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\10.0.15063.0\Windows.Foundation.FoundationContract\5.0.0.0");
+				paths.Add($@"{pf}\Windows Kits\10\References\10.0.22621.0\Windows.Foundation.FoundationContract\15.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.FoundationContract\3.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.FoundationContract\2.0.0.0");
 				paths.Add($@"{pf}\Windows Kits\10\References\Windows.Foundation.FoundationContract\1.0.0.0");
@@ -707,6 +801,30 @@ namespace Mono.ApiTools.Tests
 			}
 
 			return paths;
+		}
+
+		private static string? FindVisualStudio(string pf, bool preview = false)
+		{
+			// find out where VS is installed with Xamarin
+			var info = new ProcessStartInfo
+			{
+				FileName = $@"{pf}\Microsoft Visual Studio\Installer\vswhere.exe",
+				Arguments = "-requires Component.Xamarin -latest -property installationPath",
+				RedirectStandardOutput = true
+			};
+
+			if (preview)
+			{
+				info.Arguments += " -prerelease";
+			}
+
+			var vswhere = Process.Start(info);
+
+			vswhere.WaitForExit();
+
+			var vs = vswhere.StandardOutput.ReadLine();
+
+			return vs;
 		}
 
 		private async Task AddDependencyAsync(NuGetDiff comparer, string id, string version, string platform)

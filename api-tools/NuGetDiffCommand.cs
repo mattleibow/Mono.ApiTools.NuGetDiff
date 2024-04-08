@@ -38,6 +38,8 @@ namespace Mono.ApiTools
 
 		public string SourceUrl { get; set; } = "https://api.nuget.org/v3/index.json";
 
+		public bool CompareNuGetStructure { get; set; }
+
 		protected override OptionSet OnCreateOptions() => new OptionSet
 		{
 			{ "cache=", "The package cache directory", v => PackageCache = v },
@@ -48,8 +50,10 @@ namespace Mono.ApiTools
 			{ "prerelease", "Include preprelease packages", v => PrePrelease = true },
 			{ "ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true },
 			{ "search-path=", "A search path directory", v => SearchPaths.Add(v) },
+			{ "s|search=", "A search path directory", v => SearchPaths.Add(v) },
 			{ "source=", "The NuGet URL source", v => SourceUrl = v },
 			{ "version=", "The version of the package to compare", v => Version = v },
+			{ "compare-nuget-structure", "Compare NuGet metadata and file contents", v => CompareNuGetStructure = true },
 		};
 
 		protected override bool OnValidateArguments(IEnumerable<string> extras)
@@ -203,6 +207,8 @@ namespace Mono.ApiTools
 			comparer.IgnoreResolutionErrors = true;                 // we don't care if frameowrk/platform types can't be found
 			comparer.MarkdownDiffFileExtension = ".diff.md";
 			comparer.IgnoreNonBreakingChanges = false;
+			comparer.SaveNuGetStructureDiff = CompareNuGetStructure;
+
 			await comparer.SaveCompleteDiffToDirectoryAsync(olderReader, reader, diffRoot);
 
 			// run the diff with just the breaking changes
