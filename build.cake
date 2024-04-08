@@ -1,7 +1,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var pullrequest = Argument("pullrequest", "");
-var prerelease = Argument("prerelease", true) || !string.IsNullOrEmpty(pullrequest);
+var pullrequest = Argument("pullrequest", 0);
+var prerelease = Argument("prerelease", true) || pullrequest > 0;
 
 // a bit of logic to create the version number:
 //  - input                     = 1.2.3.4
@@ -13,7 +13,7 @@ var assemblyVersion = $"{version.Major}.0.0.0";
 var fileVersion     = $"{version.Major}.{version.Minor}.{version.Build}.0";
 var infoVersion     = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
 var packageVersion  = $"{version.Major}.{version.Minor}.{version.Build}";
-var previewlabel = string.IsNullOrEmpty(pullrequest) ? "preview" : $"pr.{pullrequest}";
+var previewlabel = pullrequest > 0 ? $"pr.{pullrequest}" : "preview";
 var previewVersion  = $"{packageVersion}-{previewlabel}.{previewNumber}";
 var finalBuildNumber = prerelease ? previewVersion : packageVersion;
 
