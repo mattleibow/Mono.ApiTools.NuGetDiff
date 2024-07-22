@@ -2,11 +2,11 @@ trigger:
   - main
 
 variables:
-  BASE_VERSION: 1.4.1
+  BASE_VERSION: 1.4.2
   BUILD_NUMBER: $[counter(format('{0}_{1}', variables['BASE_VERSION'], variables['Build.SourceBranch']), 1)]
   PACKAGE_VERSION: $(BASE_VERSION).$(BUILD_NUMBER)
   CONFIGURATION: 'Release'
-  BUILD_PRERELEASE: false
+  BUILD_PRERELEASE: true
   DOTNET_CORE_VERSION: 8.x
   PR_NUMBER: $[coalesce(variables['System.PullRequest.PullRequestNumber'], '0')]
 
