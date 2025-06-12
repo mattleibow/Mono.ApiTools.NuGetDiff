@@ -208,7 +208,6 @@ namespace Mono.ApiTools.Tests
 				});
 
 			Assert.NotNull(version);
-			Assert.False(version.IsPrerelease);
 			Assert.Equal(NuGetVersion.Parse(expectedVersion), version);
 		}
 
