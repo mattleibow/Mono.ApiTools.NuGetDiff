@@ -32,6 +32,8 @@ namespace Mono.ApiTools
 
 		public bool PrePrelease { get; set; }
 
+		public bool PreferRelease { get; set; }
+
 		public bool IgnoreUnchanged { get; set; }
 
 		public string OutputDirectory { get; set; }
@@ -48,6 +50,7 @@ namespace Mono.ApiTools
 			{ "latest", "Compare against the latest", v => Latest = true },
 			{ "output=", "The output directory", v => OutputDirectory = v },
 			{ "prerelease", "Include preprelease packages", v => PrePrelease = true },
+			{ "prefer-release", "Prefer release packages over prerelease packages", v => PreferRelease = true },
 			{ "ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true },
 			{ "search-path=", "A search path directory", v => SearchPaths.Add(v) },
 			{ "s|search=", "A search path directory", v => SearchPaths.Add(v) },
@@ -157,6 +160,7 @@ namespace Mono.ApiTools
 				var filter = new NuGetVersions.Filter
 				{
 					IncludePrerelease = PrePrelease,
+					PreferRelease = PreferRelease,
 					SourceUrl = SourceUrl,
 				};
 				latest = (await NuGetVersions.GetLatestAsync(packageId, filter))?.ToNormalizedString();

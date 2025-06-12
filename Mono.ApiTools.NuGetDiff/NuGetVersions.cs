@@ -26,9 +26,15 @@ namespace Mono.ApiTools
 		{
 			var versions = await EnumerateAllAsync(id, filter, cancellationToken);
 
+			// If we prefer release and there are some release, then we should filter out prerelease 
+			if (filter?.PreferRelease == true && versions.Any(v => !v.IsPrerelease))
+				versions = versions.Where(v => !v.IsPrerelease);
+
+			// If we have a range filter, we find the best match
 			if (filter?.VersionRange != null)
 				return filter.VersionRange.FindBestMatch(versions);
 
+			// We have no filter, so we just return the latest
 			return versions.Reverse().FirstOrDefault();
 		}
 
@@ -61,6 +67,8 @@ namespace Mono.ApiTools
 		public class Filter
 		{
 			public bool IncludePrerelease { get; set; }
+
+			public bool PreferRelease { get; set; }
 
 			public bool IncludeUnlisted { get; set; }
 

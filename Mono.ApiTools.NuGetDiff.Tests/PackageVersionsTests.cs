@@ -191,5 +191,43 @@ namespace Mono.ApiTools.Tests
 
 			Assert.Equal(NuGetVersion.Parse(matched), version);
 		}
+
+		[Theory]
+		[InlineData(true, true, "2.0.0")]
+		[InlineData(true, false, "2.0.0")]
+		[InlineData(false, true, "2.1.0-preview.2")]
+		[InlineData(false, false, "2.0.0")]
+		public async Task TestGetLatestWithPreferRelease(bool preferRelease, bool includePrerelease, string expectedVersion)
+		{
+			var version = await NuGetVersions.GetLatestAsync(
+				"SkiaSharp.Extended.UI.Forms",
+				new NuGetVersions.Filter
+				{
+					PreferRelease = preferRelease,
+					IncludePrerelease = includePrerelease
+				});
+
+			Assert.NotNull(version);
+			Assert.False(version.IsPrerelease);
+			Assert.Equal(NuGetVersion.Parse(expectedVersion), version);
+		}
+
+		[Theory]
+		[InlineData(true, "6.0.101-preview.11.2349")]
+		[InlineData(false, "6.0.101-preview.11.2349")]
+		public async Task TestGetLatestPrereleaseWithPreferReleaseWhenNoneAvailable(bool preferRelease, string expectedVersion)
+		{
+			var version = await NuGetVersions.GetLatestAsync(
+				"Microsoft.NET.Sdk.Maui.Manifest-6.0.100",
+				new NuGetVersions.Filter
+				{
+					IncludePrerelease = true,
+					PreferRelease = preferRelease
+				});
+
+			Assert.NotNull(version);
+			Assert.True(version.IsPrerelease);
+			Assert.Equal(NuGetVersion.Parse(expectedVersion), version);
+		}
 	}
 }
