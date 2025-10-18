@@ -111,10 +111,20 @@ namespace Mono.ApiTools
 					{
 						foreach (var dependency in dependencySet.Packages)
 						{
-							var depIdentity = new PackageIdentity(dependency.Id, dependency.VersionRange.MinVersion ?? dependency.VersionRange.MaxVersion);
-							if (depIdentity.Version != null)
+							// Try to use MinVersion if available, otherwise try MaxVersion
+							var version = dependency.VersionRange?.MinVersion ?? dependency.VersionRange?.MaxVersion;
+							if (version != null)
 							{
-								await ExtractPackageToDirectoryAsync(depIdentity, outputDirectory, includeDependencies, cancellationToken).ConfigureAwait(false);
+								var depIdentity = new PackageIdentity(dependency.Id, version);
+								try
+								{
+									await ExtractPackageToDirectoryAsync(depIdentity, outputDirectory, includeDependencies, cancellationToken).ConfigureAwait(false);
+								}
+								catch
+								{
+									// Silently ignore errors extracting dependencies
+									// This prevents failures when dependencies are not available
+								}
 							}
 						}
 					}
