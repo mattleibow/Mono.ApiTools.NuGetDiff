@@ -19,7 +19,23 @@ namespace Mono.ApiTools
 				"Global options:",
 				{ "v|verbose", "Use a more verbose output", _ => Verbose = true },
 				"",
-				"Available commands:",
+				"Assembly commands:",
+				new CommandSet("assembly")
+				{
+					new ApiInfoCommand("info"),
+					new ApiCompatCommand(),
+					new DiffCommand(),
+					new MergeCommand(),
+				},
+				"",
+				"NuGet commands:",
+				new CommandSet("nuget")
+				{
+					new NuGetDiffCommand("diff"),
+					new NuGetDownloadCommand()
+				},
+				"",
+				"Obsolete commands:",
 				new ApiInfoCommand(),
 				new ApiCompatCommand(),
 				new DiffCommand(),
