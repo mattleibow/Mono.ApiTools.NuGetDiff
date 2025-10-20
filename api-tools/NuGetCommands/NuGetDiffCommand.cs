@@ -9,16 +9,14 @@ using NuGet.Versioning;
 
 namespace Mono.ApiTools
 {
-	public class NuGetDiffCommand : BaseCommand
+	public class NuGetDiffCommand : NuGetBaseCommand
 	{
-		public NuGetDiffCommand()
-			: base("nuget-diff", "[PACKAGES | DIRECTORIES]", "Compare two NuGet packages.")
+		public NuGetDiffCommand(string name = "nuget-diff")
+			: base(name, "[PACKAGES | DIRECTORIES]", "Compare two NuGet packages.")
 		{
 		}
 
 		public List<string> Packages { get; set; } = new List<string>();
-
-		public string PackageCache { get; set; }
 
 		public List<string> SearchPaths { get; set; } = new List<string>();
 
@@ -30,39 +28,31 @@ namespace Mono.ApiTools
 
 		public bool Latest { get; set; }
 
-		public bool PrePrelease { get; set; }
-
-		public bool PreferRelease { get; set; }
-
 		public bool IgnoreUnchanged { get; set; }
 
 		public string OutputDirectory { get; set; }
 
-		public string SourceUrl { get; set; } = "https://api.nuget.org/v3/index.json";
-
 		public bool CompareNuGetStructure { get; set; }
 
-		protected override OptionSet OnCreateOptions() => new OptionSet
+		protected override OptionSet OnCreateOptions()
 		{
-			{ "cache=", "The package cache directory", v => PackageCache = v },
-			{ "group-ids", "Group the output by package ID", v => GroupByPackageId = true },
-			{ "group-versions", "Group the output by version", v => GroupByVersion = true },
-			{ "latest", "Compare against the latest", v => Latest = true },
-			{ "output=", "The output directory", v => OutputDirectory = v },
-			{ "prerelease", "Include preprelease packages", v => PrePrelease = true },
-			{ "prefer-release", "Prefer release packages over prerelease packages", v => PreferRelease = true },
-			{ "ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true },
-			{ "search-path=", "A search path directory", v => SearchPaths.Add(v) },
-			{ "s|search=", "A search path directory", v => SearchPaths.Add(v) },
-			{ "source=", "The NuGet URL source", v => SourceUrl = v },
-			{ "version=", "The version of the package to compare", v => Version = v },
-			{ "compare-nuget-structure", "Compare NuGet metadata and file contents", v => CompareNuGetStructure = true },
-			{ "include-structure", "Compare NuGet metadata and file contents", v => CompareNuGetStructure = true },
-		};
+			var options = base.OnCreateOptions();
+			options.Add("group-ids", "Group the output by package ID", v => GroupByPackageId = true);
+			options.Add("group-versions", "Group the output by version", v => GroupByVersion = true);
+			options.Add("latest", "Compare against the latest", v => Latest = true);
+			options.Add("output=", "The output directory", v => OutputDirectory = v);
+			options.Add("ignore-unchanged", "Ignore unchanged packages and assemblies", v => IgnoreUnchanged = true);
+			options.Add("search-path=", "A search path directory", v => SearchPaths.Add(v));
+			options.Add("s|search=", "A search path directory", v => SearchPaths.Add(v));
+			options.Add("version=", "The version of the package to compare", v => Version = v);
+			options.Add("compare-nuget-structure", "Compare NuGet metadata and file contents", v => CompareNuGetStructure = true);
+			options.Add("include-structure", "Compare NuGet metadata and file contents", v => CompareNuGetStructure = true);
+			return options;
+		}
 
-		protected override bool OnValidateArguments(IEnumerable<string> extras)
+        protected override bool OnValidateArguments(IEnumerable<string> extras)
 		{
-			var hasError = false;
+			var hasError = !base.OnValidateArguments(extras);
 
 			var packages = extras.Where(p => !string.IsNullOrEmpty(p)).ToArray();
 
@@ -109,9 +99,6 @@ namespace Mono.ApiTools
 
 			if (string.IsNullOrEmpty(OutputDirectory))
 				OutputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "api-diff");
-
-			if (string.IsNullOrEmpty(PackageCache))
-				PackageCache = Path.Combine(Directory.GetCurrentDirectory(), "packages");
 
 			return !hasError;
 		}

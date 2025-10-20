@@ -9,8 +9,8 @@ namespace Mono.ApiTools
 {
 	public class ApiInfoCommand : BaseCommand
 	{
-		public ApiInfoCommand()
-			: base("api-info", "ASSEMBLY ...", "Generate API info XML for assemblies.")
+		public ApiInfoCommand(string name = "api-info")
+			: base(name, "ASSEMBLY ...", "Generate API info XML for assemblies.")
 		{
 		}
 
